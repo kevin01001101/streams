@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/kevin01001101/arts/issues"
   },
-  "homepage": "https://github.com/kevin01001101/arts#readme"
+  "homepage": "https://github.com/kevin01001101/arts#readme",
+  "dependencies": {
+    "http-server": "^0.12.1"
+  }
 }
