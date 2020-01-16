@@ -18,6 +18,10 @@
   "homepage": "https://github.com/kevin01001101/arts#readme",
   "dependencies": {},
   "devDependencies": {
-    "http-server": "^0.12.1"
+    "bootstrap": "^4.4.1",
+    "http-server": "^0.12.1",
+    "jquery": "^3.4.1",
+    "popper.js": "^1.16.0",
+    "typescript": "^3.7.4"
   }
 }
