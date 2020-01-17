@@ -1,3 +1,5 @@
+import { html } from 'lit-html'
+
 interface EntityResponse {
     displayName: string;
 }
@@ -11,10 +13,9 @@ export class Entity {
 
     }
 
-    Render() {
-        return `<div>${this.displayName}</div>`;
+    BuildTemplate() {
+        return html`<div>${this.displayName}</div>`;
     }
-
 
 }
 
