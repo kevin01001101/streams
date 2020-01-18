@@ -1,3 +1,4 @@
+import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 
 export default {
@@ -6,8 +7,17 @@ export default {
     file: 'dist/bundle.js',
     format: 'iife'
   },
-  plugins: [resolve()],
+  context: 'window',
+  plugins: [resolve(), commonjs()],
   watch: {
     clearScreen: false  
   }
 };
+
+/*
+commonjs({
+    namedExports: {
+      'quill': ['Quill']
+    }
+  }),
+  */
