@@ -6,8 +6,8 @@ import {addListNodes} from "prosemirror-schema-list"
 import {exampleSetup} from "prosemirror-example-setup"
 import {addMentionNodes, addTagNodes, getMentionsPlugin} from 'prosemirror-mentions'
 
-const _template = document.createElement('template');
-    _template.innerHTML = `
+const _activityInputTemplate = document.createElement('template');
+_activityInputTemplate.innerHTML = `
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="src/css/style.css" id="styles">
     <link rel="stylesheet" href="src/css/editor.css" id="editorStyles">
@@ -27,21 +27,24 @@ const _template = document.createElement('template');
         <div class="editor"></div>
         <div class="content"></div>
 
-        <button class="btn btn-sm btn-primary">publish</button>
-        <button class="btn btn-sm btn-secondary">cancel</button>
+        <button class="publish btn btn-sm btn-primary">publish</button>
+        <button class="cancel btn btn-sm btn-secondary">cancel</button>
 `;
 
 export class ActivityInput extends HTMLElement {
     _shadowRoot: ShadowRoot;
-    plugins: any[] = [];
+    _plugins: any[] = [];
+    _view: EditorView;
+
+    _initialState = "{\"doc\":{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"What does this look like when \"},{\"type\":\"mention\",\"attrs\":{\"id\":\"102\",\"name\":\"Joe Lewis\",\"email\":\"lewis@gmail.com\"}},{\"type\":\"text\",\"text\":\" something \"},{\"type\":\"tag\",\"attrs\":{\"tag\":\"WikiLeaks\"}},{\"type\":\"text\",\"text\":\" else\"}]}]},\"selection\":{\"type\":\"text\",\"anchor\":49,\"head\":49}}";
 
     constructor() {
         super();
         this._shadowRoot = this.attachShadow({mode:'open'});
         this.style.display = 'none';
-        this._shadowRoot.appendChild(_template.content.cloneNode(true));
+        this._shadowRoot.appendChild(_activityInputTemplate.content.cloneNode(true));
         this._shadowRoot.querySelector('#editorStyles')?.addEventListener('load', () => {
-            console.log("hello");
+            console.log("proseMirror styles loaded");
             this.initialize();
          });
 
@@ -54,14 +57,19 @@ export class ActivityInput extends HTMLElement {
             nodes: addTagNodes(addMentionNodes(addListNodes(schema.spec.nodes, "paragraph block*", "block"))),
             marks: schema.spec.marks
         });
-        this.plugins = exampleSetup({schema: mySchema});
-        this.plugins.unshift(this.mentionPlugin); // push it before keymap plugin to override keydown handlers
+        this._plugins = exampleSetup({schema: mySchema});
+        this._plugins.unshift(this.mentionPlugin); // push it before keymap plugin to override keydown handlers
 
-        const view = new EditorView(this._shadowRoot.querySelector('.editor'), {
-            state: EditorState.create({
-                doc: DOMParser.fromSchema(mySchema).parse(this._shadowRoot.querySelector('.content')),
-                plugins: this.plugins
-            })
+        this._view = new EditorView(this._shadowRoot.querySelector('.editor'), {
+            // state: EditorState.create({
+            //     doc: DOMParser.fromSchema(mySchema).parse(this._shadowRoot.querySelector('.content')),
+            //     plugins: this._plugins
+            // })
+            state: EditorState.fromJSON({
+                    doc: DOMParser.fromSchema(mySchema).parse(this._shadowRoot.querySelector('.content')),
+                    schema: mySchema,
+                    plugins: this._plugins
+                }, JSON.parse(this._initialState))
         });
         let svg = document.getElementById('ProseMirror-icon-collection');
         if (svg) this._shadowRoot.appendChild(svg);
@@ -69,8 +77,44 @@ export class ActivityInput extends HTMLElement {
     }
 
     connectedCallback() {
+        this._shadowRoot.querySelector('button.publish')?.addEventListener('click', this.publish);
+    }
+
+    publish = (evt:Event) => {
+        console.log("clicked on the button");
+        console.log("State {0}", this._view.state);
+
+        let data = {
+            "contentText": (this._shadowRoot.querySelector('.ProseMirror') as HTMLElement).innerText,
+            //"contentJson": JSON.stringify(this._view.state.toJSON())
+            "contentHtml": (this._shadowRoot.querySelector('.ProseMirror') as HTMLElement).innerHTML
+        }
+
+        this.dispatchEvent(new CustomEvent('publish', { bubbles: true, detail: data }));
+
+        // fetch('http://127.0.0.1:8080/api/activity', {
+        //     method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        //     // mode: 'cors', // no-cors, *cors, same-origin
+        //     // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        //     // credentials: 'same-origin', // include, *same-origin, omit
+        //     headers: {
+        //       'Content-Type': 'application/json'
+        //       // 'Content-Type': 'application/x-www-form-urlencoded',
+        //     },
+        //     // redirect: 'follow', // manual, *follow, error
+        //     // referrerPolicy: 'no-referrer', // no-referrer, *client
+        //     body: JSON.stringify(data) // body data type must match "Content-Type" header
+        // })
+        // .then((response) => response.json())
+        // .then((data) => {
+        //   console.log('Success:', data);
+        // })
+        // .catch((error) => {
+        //   console.error('Error:', error);
+        // });
 
     }
+
 
     /**
      * IMPORTANT: outer div's "suggestion-item-list" class is mandatory. The plugin uses this class for querying.

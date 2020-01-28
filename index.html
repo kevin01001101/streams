@@ -6,6 +6,7 @@
         Hello
     </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css" />
     <!-- <link rel="stylesheet" href="src/css/style.css"> -->
     <link rel="stylesheet" href="src/css/app.css">
 
@@ -16,6 +17,12 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
     <style type="text/css" rel="stylesheet">
+        /* .container {
+            display:grid;
+            grid-template-columns:25% 50% 25%;
+            grid-template-rows:100px auto;
+        } */
+
         #activityInput {
             height:10rem;
             width:100%;
@@ -24,19 +31,36 @@
         .controls {
             margin:0.4rem;
         }
+
+        .scrollable {
+            height:calc(100vh - 17rem);
+            overflow-y:auto;
+        }
     </style>
 </head>
 
 <body>
     <div class="container-fluid">
-        <h1>STREAMS</h1>
+
         <div class="row">
             <div class="col-3">
-
-
+                <heading>
+                    <h1>STREAMS</h1>
+                </heading>
             </div>
+
             <div class="col">
+                <header>
+                    <h1>Your Feed</h1>
+                </header>
                 <activity-input></activity-input>
+                <div id="activityList" class="scrollable"></div>
+            </div>
+
+            <div class="col-3">
+                <form>
+                    <input class="form-control" type="text" id="searchInput" />
+                </form>
             </div>
 
         </div>
