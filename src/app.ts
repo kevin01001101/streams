@@ -10,7 +10,7 @@ import { htmlEscape, htmlUnescape } from './utilities.js';
 
 interface ActivityResponse {
     activities: ActivityApiResponse[];
-    people: Entity[];
+    entities: Entity[];
 }
 
 
@@ -29,8 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
         let publishEvent = evt as CustomEvent;
         // publish the activity to the server
         let newActivity = {
-            contentHtml: htmlEscape(publishEvent.detail.contentHtml),
-            contentText: publishEvent.detail.contentText
+            contentHtml: publishEvent.detail.contentHtml
         };
 
         fetch('https://localhost:44387/api/activities', {
@@ -38,13 +37,45 @@ window.addEventListener('DOMContentLoaded', () => {
             mode: 'cors',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Expose-Headers': 'Location'
             },
             body: JSON.stringify(newActivity)
         })
         .then((response) => {
             console.log(response.ok);
             console.log(response.status);
+            // if response is good, then fetch the newly created entry and add it to our list
+            if (response.status == 201) {
+                let newActivityUri = response.headers.get("Location");
+                if (newActivityUri != null) {
+                    fetch(newActivityUri, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then((response) => {
+                        return response.json();
+                    })
+                    .then((data: ActivityResponse) => {
+                        console.log(JSON.stringify(data));
+
+                        let activityListElem = document.getElementById('activityList');
+                        activityListElem?.prepend(...data.activities.map(a => {
+                            let item = new ActivityItem();
+                            item.authorId = a.authorId;
+                            item.authorName = _people.get(a.authorId)?.displayName ?? "";
+                            item.content = htmlUnescape(a.htmlContent);
+                            item.timestamp = DateTime.fromISO(a.created as string);
+                            item.reactions = a.reactions;
+                            return item;
+                        }));
+                    })
+                }
+            }
         })
     });
 
@@ -63,11 +94,11 @@ window.addEventListener('DOMContentLoaded', () => {
     .then((data: ActivityResponse) => {
         console.log(JSON.stringify(data));
 
-        data.people.forEach(p => {
+        data.entities.forEach(p => {
             _people.set(p.id, p);
         });
         //  then display those items in the display area
-        let activityListElem = document.querySelector('#activityList');
+        let activityListElem = document.getElementById('activityList');
         activityListElem?.append(...data.activities.map(a => {
             let item = new ActivityItem();
             item.authorId = a.authorId;
@@ -79,8 +110,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }));
         //activityListElem.activities = data.activities;
     });
-
-
 
     //(document.querySelector('activity-list') as ActivityList).activities = [testActivity, testActivity];
     console.log("done...");

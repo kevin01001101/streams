@@ -20,7 +20,15 @@ _activityInputTemplate.innerHTML = `
         overflow-y:auto;
       }
 
-
+      .prosemirror-mention-node {
+          color:blue;
+          font-family:Arial, Helvetica, sans-serif
+      }
+      .prosemirror-tag-node {
+          background-color: rgba(192,192,192,0.6);
+          border-radius:4px;
+          padding:0.2rem;
+      }
 
     </style>
 
@@ -85,34 +93,10 @@ export class ActivityInput extends HTMLElement {
         console.log("State {0}", this._view.state);
 
         let data = {
-            "contentText": (this._shadowRoot.querySelector('.ProseMirror') as HTMLElement).innerText,
             //"contentJson": JSON.stringify(this._view.state.toJSON())
             "contentHtml": (this._shadowRoot.querySelector('.ProseMirror') as HTMLElement).innerHTML
         }
-
         this.dispatchEvent(new CustomEvent('publish', { bubbles: true, detail: data }));
-
-        // fetch('http://127.0.0.1:8080/api/activity', {
-        //     method: 'POST', // *GET, POST, PUT, DELETE, etc.
-        //     // mode: 'cors', // no-cors, *cors, same-origin
-        //     // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-        //     // credentials: 'same-origin', // include, *same-origin, omit
-        //     headers: {
-        //       'Content-Type': 'application/json'
-        //       // 'Content-Type': 'application/x-www-form-urlencoded',
-        //     },
-        //     // redirect: 'follow', // manual, *follow, error
-        //     // referrerPolicy: 'no-referrer', // no-referrer, *client
-        //     body: JSON.stringify(data) // body data type must match "Content-Type" header
-        // })
-        // .then((response) => response.json())
-        // .then((data) => {
-        //   console.log('Success:', data);
-        // })
-        // .catch((error) => {
-        //   console.error('Error:', error);
-        // });
-
     }
 
 
@@ -141,23 +125,26 @@ export class ActivityInput extends HTMLElement {
 
     mentionPlugin = getMentionsPlugin({
         getSuggestions: (type, text: string, done) => {
-        setTimeout(() => {
             if (type === 'mention') {
-                //const reg = new RegExp(text, "gi");
-                //reg.test()
-                // pass dummy mention suggestions
-                done(this.mentions.filter((item) => {
-                    const reg = new RegExp(text, "gi");
-                    console.log(item.name);
-                    let t = reg.test(item.name);
-                    console.log(t);
-                    return t;
-                }));
+
             } else {
-                // pass dummy tag suggestions
-                done([{tag: 'WikiLeaks'}, {tag: 'NetNeutrality'}])
+                fetch('https://localhost:44387/api/tags/' + text, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+                    done(data.map(item => {
+                        return { "tag":item.text }
+                    }));
+                });
             }
-        }, 0);
         },
         getSuggestionsHTML: (items, type) =>  {
             if (type === 'mention') {

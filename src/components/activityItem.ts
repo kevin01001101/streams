@@ -66,9 +66,11 @@ export class ActivityItem extends HTMLElement {
         .activity.card {
           margin:0.5rem;
         }
+
         .card-header {
           display:flex;
           padding: 0.5rem;
+          border-bottom:none;
          /* align-items:flex-end;*/
         }
 
@@ -81,25 +83,14 @@ export class ActivityItem extends HTMLElement {
           flex-grow:1;
         }
 
-        .reactions .emoji {
-          padding:0.5rem;
-          border-radius:4px;
-        }
-
-        .reactions .emoji.active {
-          background-color:silver;
-
-        }
-
-        .reactions .emoji:hover,
-        .reactions .emoji.active:hover {
+        .control:hover {
           cursor:pointer;
-          background-color:rgba(128,128,128,0.7);
         }
 
         .card-footer {
           display:flex;
           padding:0.5rem;
+          border-top:none;
           justify-content:space-around;
         }
 
@@ -107,12 +98,56 @@ export class ActivityItem extends HTMLElement {
           margin-right:0.6rem;
         }
 
+        .prosemirror-mention-node {
+          color:blue;
+          font-family:Arial, Helvetica, sans-serif
+        }
+        .prosemirror-tag-node {
+          background-color: rgba(192,192,192,0.6);
+          border-radius:4px;
+          padding:0.2rem;
+        }
+
+        .card-footer .reactions button {
+          border-color:transparent;
+        }
+        .card-footer div.reactions .btn-outline-secondary.active {
+          background-color:lightgray;
+        }
+        .card-footer div.reactions .btn-outline-secondary.active:hover {
+          background-color:gray;
+        }
+
+
+        .card:hover .card-footer button {
+          border-color:unset;
+        }
+
+        .card-footer button.toggle {
+          opacity:0;
+        }
+        .card:hover .card-footer button.toggle {
+          opacity:1;
+          transition: 0.4s;
+        }
+
+        .bookmark {
+          height:100%;
+          background-color:none;
+        }
+        .bookmark:hover {
+          background-color:lightgray;
+          color:black;
+        }
+
         </style>
       <div class="activity card">
         <div class="card-header">
           <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
           <div class="author ml-1">${this.authorName}</div>
-          <i class="ms-Icon ms-Icon--AddBookmark" aria-hidden="true"></i>
+          <span class="bookmark control badge badge-pill badge-light">
+            <i class="ms-Icon ms-Icon--AddBookmark" aria-hidden="true"></i>
+          </span>
         </div>
         <div class="card-body">
           <div style="text-align:right;"><small class="timestamp text-muted" title="${this.timestamp.toLocaleString(DateTime.DATETIME_SHORT)}">${this.timestamp.toRelative()}</small></div>
@@ -120,14 +155,30 @@ export class ActivityItem extends HTMLElement {
         </div>
         <div class="card-footer">
           <div class="reactions">
-            <span class="emoji" title="happy">😀</span>
-            <span class="emoji" title="upset">😡</span>
-            <span class="emoji" title="confused">😕</span>
-            <span class="emoji" title="clap">👏</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              <span class="emoji happy">😀</span>
+              <span class="badge badge-light">9</span>
+              <span class="sr-only">happy responses</span>
+            </button>
+            <button type="button" class="active btn btn-sm btn-outline-secondary">
+              <span class="emoji upset">😡</span>
+              <span class="badge badge-light">9</span>
+              <span class="sr-only">happy responses</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              <span class="emoji confused">😕</span>
+              <span class="badge badge-light"></span>
+              <span class="sr-only">happy responses</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+              <span class="emoji clap">👏</span>
+              <span class="badge badge-light">9</span>
+              <span class="sr-only">happy responses</span>
+            </button>
           </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--NoteReply" aria-hidden="true"></i><span>Restream</span></button>
-          <button type="button" class="btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Comment</span></button>
-          <button type="button" class="btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i><span>Share</span></button>
+          <button type="button" class="toggle btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--NoteReply" aria-hidden="true"></i><span>Restream</span></button>
+          <button type="button" class="toggle btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Comment</span></button>
+          <button type="button" class="toggle btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i><span>Share</span></button>
         </div>
       </div>
     `;
