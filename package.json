@@ -4,7 +4,10 @@
   "description": "UI for work tracking",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -w &",
+    "pack": "rollup -c -w &",
+    "serve": "http-server &"
   },
   "repository": {
     "type": "git",

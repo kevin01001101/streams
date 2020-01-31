@@ -6,19 +6,23 @@
         Hello
     </title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link rel="stylesheet" href="dist/css/app.css">
+    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css" />
+    <!-- <link rel="stylesheet" href="src/css/style.css"> -->
+    <link rel="stylesheet" href="src/css/app.css">
 
-    <link rel="stylesheet" href="//cdn.quilljs.com/1.3.6/quill.snow.css">
-    <link rel="stylesheet" href="node_modules/quill-mention/dist/quill.mention.css">
-    <!-- <link rel="stylesheet" href="dist/css/site.css"> -->
-    <link rel="stylesheet" href="dist/css/editor.css">
 
     <script src="dist/bundle.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>  
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
     <style type="text/css" rel="stylesheet">
+        /* .container {
+            display:grid;
+            grid-template-columns:25% 50% 25%;
+            grid-template-rows:100px auto;
+        } */
+
         #activityInput {
             height:10rem;
             width:100%;
@@ -27,26 +31,52 @@
         .controls {
             margin:0.4rem;
         }
+
+        .scrollable {
+            height:calc(100vh - 17rem);
+            overflow-y:auto;
+        }
+
     </style>
+    <script type="text/javascript">
+    </script>
 </head>
 
 <body>
-    <h1>STREAMS</h1>
-    <form>
-        <div style="margin:1rem;">
-            <div id="activityEditor"></div>
-            <div class="controls">
-                <button class="btn btn-sm btn-primary">publish</button>
-                <button class="btn btn-sm btn-secondary">cancel</button>
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-3">
+                <heading>
+                    <h1>STREAMS</h1>
+                </heading>
+                <div>
+                    <a href="/somewhere">About</a>
+                    <h3>@ - Connect</h3>
+                    <h3># - Discover</h3>
+                    <h3>P - Me</h3>
+                    <h3>S - Search</h3>
+                    <h3>L - Lists</h3>
+                    <h3>G - Settings</h3>
+                </div>
             </div>
+
+            <div class="col">
+                <activity-input></activity-input>
+                <h2>Now Showing: <span>Your Feed</span></h2>
+                <div id="activityList" class="scrollable"></div>
+            </div>
+
+            <div class="col-3">
+                <form>
+                    <input class="form-control" type="text" id="searchInput" />
+                </form>
+            </div>
+
         </div>
-        
-    </form>
-
-    <div id="output"></div>
-    <activity-input></activity-input>
-
+    </div>
 
 </body>
+
 
 </html>
