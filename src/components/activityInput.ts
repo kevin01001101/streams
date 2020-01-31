@@ -126,39 +126,46 @@ export class ActivityInput extends HTMLElement {
         // let ep = new EditorProps();
         // ep.
         this._view = new EditorView(this.shadowRoot?.querySelector('.editor'), {
-            state: this._state,
-            editorProps: {
-                handleClick: (view, pos, event) => {
-                    console.log("CLICK");
-                    return true;
-                }
-            }
+            state: this._state
             // state: EditorState.fromJSON({
             //         doc: DOMParser.fromSchema(mySchema).parse(document.createElement('p')),
             //         schema: mySchema,
             //         plugins: this._plugins
             //     }, JSON.parse(this._initialState))
         });
-        this._view.setProps({handleDOMEvents: { "focus" : (view, event) => {
-            console.log("YOU did something...");
-            console.log(this);
-            let editor = this.shadowRoot?.querySelector('.ProseMirror.ProseMirror-example-setup-style');
-            console.log(editor);
-            // (editor as HTMLElement).focus();
-            // (editor as HTMLElement).blur();
-            // (editor as HTMLElement).focus();
 
-            return false;
-        }}});
         let svg = document.getElementById('ProseMirror-icon-collection');
         if (svg) this.shadowRoot?.appendChild(svg);
         this.style.display = 'block';
+        this.myFocus();        
+    }
+
+    myFocus() {
+        let g = (this.shadowRoot?.querySelector('[contenteditable]') as HTMLElement);
+        console.log('g ', g);
+        console.log(document.activeElement);
+        g.focus();
+        setTimeout(() => {
+            console.log("CB 1 ");
+            this.focus();
+            setTimeout(() => {
+                console.log("CB 2 ");
+                document.body.focus();
+                setTimeout(() => {
+                    console.log("CB 3 ", g);                    
+                    g.focus();
+                },1)
+            },1)
+        },1)
+        console.log(document.activeElement);
     }
 
     connectedCallback() {
+        console.log('connectedCallback');
         this.shadowRoot?.querySelector('button.publish')?.addEventListener('click', this.publish);
-        this.shadowRoot?.querySelector('button.reset')?.addEventListener('click', this.reset);
+        this.shadowRoot?.querySelector('button.reset')?.addEventListener('click', this.reset);        
     }
+
     getNewEditorState = () => {
         return EditorState.create({
             doc: DOMParser.fromSchema(this._schema).parse(document.createElement('p')),
@@ -182,14 +189,8 @@ export class ActivityInput extends HTMLElement {
         this._state = this.getNewEditorState();
         this._view.updateState(this._state);
         let editor = this.shadowRoot?.querySelector('.ProseMirror.ProseMirror-example-setup-style');
-        // while (editor?.hasChildNodes()) { editor.lastChild?.remove(); }
-        // (editor as HTMLElement).insertAdjacentHTML('afterbegin', `<p><br></p>`);
-        // // cursor wasn't showing in Firefox when clicking into editor after resetting.
-        // //  it worked fine after clicking outside and then back in
-        // this._view.focus();
-        // (editor as HTMLElement).focus();
-        // (editor as HTMLElement).blur();
-        // (editor as HTMLElement).focus();
+
+        this.myFocus();
     }
 
     /**
