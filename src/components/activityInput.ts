@@ -5,6 +5,7 @@ import {Schema, DOMParser} from "prosemirror-model"
 import {schema} from "prosemirror-schema-basic"
 import {addListNodes} from "prosemirror-schema-list"
 import {exampleSetup} from "prosemirror-example-setup"
+import {addMentionNodes, addTagNodes, getMentionsPlugin} from 'prosemirror-mentions'
 
 
 export class ActivityInput extends HTMLElement {
@@ -44,7 +45,7 @@ export class ActivityInput extends HTMLElement {
         // Mix the nodes from prosemirror-schema-list into the basic schema to
         // create a schema with list support.
         const mySchema = new Schema({
-            nodes: addListNodes(schema.spec.nodes, "paragraph block*", "block"),
+            nodes: addTagNodes(addMentionNodes(addListNodes(schema.spec.nodes))),
             marks: schema.spec.marks
         })
         console.log("what's wrong...", this.proseEditor);
@@ -56,6 +57,6 @@ export class ActivityInput extends HTMLElement {
         });
         let svg = document.getElementById('ProseMirror-icon-collection');
         if (svg) this._shadowRoot.appendChild(svg);
-        
+
     }
 }
