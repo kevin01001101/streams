@@ -2,6 +2,7 @@ import { Reaction } from "../models/activity";
 import { html, render, TemplateResult } from 'lit-html';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 import { DateTime } from "luxon";
+import { ActivityInput } from './activityInput.js';
 
 
 export class ActivityItem extends HTMLElement {
@@ -47,6 +48,9 @@ export class ActivityItem extends HTMLElement {
   content: string = "";
   reactions: Reaction[] = [];
   replies: ActivityItem[] = [];
+  _isReplying: boolean = false;
+  //commentEditor: ActivityInput | null = null;
+
 
   constructor() {
     super();
@@ -82,6 +86,9 @@ export class ActivityItem extends HTMLElement {
         .author {
           flex-grow:1;
         }
+        .card-body {
+          padding: 0.5rem 0.75rem;
+        }
 
         .control:hover {
           cursor:pointer;
@@ -105,7 +112,7 @@ export class ActivityItem extends HTMLElement {
         .prosemirror-tag-node {
           background-color: rgba(192,192,192,0.6);
           border-radius:4px;
-          padding:0.2rem;
+          padding:0 0.2rem;
         }
 
         .card-footer .reactions button {
@@ -123,10 +130,10 @@ export class ActivityItem extends HTMLElement {
           border-color:unset;
         }
 
-        .card-footer button.toggle {
+        .card-footer button.showOnHover {
           opacity:0;
         }
-        .card:hover .card-footer button.toggle {
+        .card:hover .card-footer button.showOnHover {
           opacity:1;
           transition: 0.4s;
         }
@@ -140,8 +147,13 @@ export class ActivityItem extends HTMLElement {
           color:black;
         }
 
+
+        activity-input {
+          margin:0.4rem;
+        }
+
         </style>
-      <div class="activity card">
+      <div class="activity card" data-id="${this.id}">
         <div class="card-header">
           <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
           <div class="author ml-1">${this.authorName}</div>
@@ -154,51 +166,81 @@ export class ActivityItem extends HTMLElement {
           <div class="content">${unsafeHTML(this.content)}</div>
         </div>
         <div class="card-footer">
-          <div class="reactions">
+          <div class="reactions" @click=${this.reactionHandler}>
             <button type="button" class="btn btn-sm btn-outline-secondary">
               <span class="emoji happy">😀</span>
               <span class="badge badge-light">9</span>
               <span class="sr-only">happy responses</span>
             </button>
             <button type="button" class="active btn btn-sm btn-outline-secondary">
-              <span class="emoji upset">😡</span>
+              <span class="emoji upset">😿</span>
               <span class="badge badge-light">9</span>
               <span class="sr-only">happy responses</span>
             </button>
             <button type="button" class="btn btn-sm btn-outline-secondary">
-              <span class="emoji confused">😕</span>
+              <span class="emoji confused">😵</span>
               <span class="badge badge-light"></span>
               <span class="sr-only">happy responses</span>
             </button>
             <button type="button" class="btn btn-sm btn-outline-secondary">
-              <span class="emoji clap">👏</span>
+              <span class="emoji clap">❤</span>
               <span class="badge badge-light">9</span>
               <span class="sr-only">happy responses</span>
             </button>
           </div>
-          <button type="button" class="toggle btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--NoteReply" aria-hidden="true"></i><span>Restream</span></button>
-          <button type="button" class="toggle btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Comment</span></button>
-          <button type="button" class="toggle btn btn-sm btn-outline-secondary"><i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i><span>Share</span></button>
+          <button type="button" @click=${this.restreamHandler} class="restream showOnHover btn btn-sm btn-outline-secondary">
+            <i class="ms-Icon ms-Icon--NoteReply" aria-hidden="true"></i><span>Restream</span>
+          </button>
+          <button type="button" @click=${this.commentHandler} class="comment showOnHover btn btn-sm btn-outline-secondary">
+            <i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Comment</span>
+          </button>
+          <button type="button" @click=${this.shareHandler} class="share showOnHover btn btn-sm btn-outline-secondary">
+            <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i><span>Share</span>
+          </button>
         </div>
+        ${(this._isReplying ? html`<activity-input></activity-input>` : ``)}
       </div>
     `;
   }
+  restreamHandler(evt: Event) {
+    console.log("Clicked to restream ", evt);
+      this.dispatchEvent(new CustomEvent('reply', { bubbles: true }));
+  }
+  commentHandler = (evt:Event) => {
+    if (this._isReplying == true) return;
+
+    console.log("Clicked to comment ", evt);
+    this._isReplying = true;
+    this._update();
+    //this.dispatchEvent(new CustomEvent('comment', { bubbles: true }));
+
+  }
+  shareHandler(evt:Event) {
+    console.log("Clicked to share ", evt);
+    this.dispatchEvent(new CustomEvent('share', { bubbles: true }));
+  }
+
+  reactionHandler = (evt:Event) => {
+    console.log(evt.target);
+    let buttonElem = (<HTMLElement>evt.target).closest('button');
+    if (buttonElem == null) return;
+
+    console.log("an emoji was selected");
+    // Functions like radio buttons, but (unlike radio buttns) allows one to unselect the only selected item
+    if (buttonElem.classList.contains('active')) {
+      buttonElem.classList.remove('active');
+    } else {
+      this.shadowRoot?.querySelectorAll('.reactions button').forEach(elem => {
+        elem.classList.remove('active');
+      });
+      buttonElem.classList.add('active');
+    }
+
+    let currentlySelectedEmojiBtn = this.shadowRoot?.querySelector('.reactions button.active');
+    this.dispatchEvent(new CustomEvent('reaction', { bubbles: true, detail: currentlySelectedEmojiBtn }));
+  }
 
   connectedCallback() {
-    this.shadowRoot?.querySelector('.reactions')?.addEventListener('click', (evt) => {
-      let targetElem = <HTMLElement>evt.target;
-      if (targetElem.tagName == "SPAN" && targetElem.classList.contains('emoji')) {
-        console.log("an emoji was selected");
-        if (targetElem.classList.contains('active')) {
-          targetElem.classList.remove('active');
-        } else {
-          this.shadowRoot?.querySelectorAll('.reactions .emoji').forEach(elem => {
-            elem.classList.remove('active');
-          });
-          targetElem.classList.add('active');
-        }
-      }
-    });
 
     this._update();
   }
