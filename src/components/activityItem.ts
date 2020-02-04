@@ -153,7 +153,7 @@ export class ActivityItem extends HTMLElement {
         }
 
         </style>
-      <div class="activity card" data-id="${this.id}">
+      <div class="activity card" data-id="${this.id}" @publish=${this.publishHandler}>
         <div class="card-header">
           <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
           <div class="author ml-1">${this.authorName}</div>
@@ -202,19 +202,20 @@ export class ActivityItem extends HTMLElement {
       </div>
     `;
   }
+
   restreamHandler(evt: Event) {
     console.log("Clicked to restream ", evt);
       this.dispatchEvent(new CustomEvent('reply', { bubbles: true }));
   }
+
   commentHandler = (evt:Event) => {
     if (this._isReplying == true) return;
 
     console.log("Clicked to comment ", evt);
     this._isReplying = true;
     this._update();
-    //this.dispatchEvent(new CustomEvent('comment', { bubbles: true }));
-
   }
+
   shareHandler(evt:Event) {
     console.log("Clicked to share ", evt);
     this.dispatchEvent(new CustomEvent('share', { bubbles: true }));
@@ -238,6 +239,19 @@ export class ActivityItem extends HTMLElement {
 
     let currentlySelectedEmojiBtn = this.shadowRoot?.querySelector('.reactions button.active');
     this.dispatchEvent(new CustomEvent('reaction', { bubbles: true, detail: currentlySelectedEmojiBtn }));
+  }
+
+  publishHandler = (evt:Event) => {
+    console.log("Received publish>");
+    evt.stopPropagation();
+    this.dispatchEvent(new CustomEvent("reply", { 
+      bubbles: true,
+      detail: {
+        parentId: this.id,
+        details: "message details"
+      } 
+    }));
+    
   }
 
   connectedCallback() {

@@ -77,7 +77,7 @@ const reactionChanged = (evt:Event) =>{
 }
 
 const replyToActivity = (evt:Event) => {
-
+    console.log("Publishing the rpely...", (evt as CustomEvent).detail);
 }
 
 const commentOnActivity = (evt: Event) => {
@@ -97,13 +97,15 @@ window.addEventListener('DOMContentLoaded', () => {
     // render the new activity control (text editor w/ buttons)
     window.customElements.define('activity-input', ActivityInput);
     window.customElements.define('activity-item', ActivityItem);
-    window.customElements.define('activity-list', ActivityList);
+    //window.customElements.define('activity-list', ActivityList);
 
     let activityInputElem = document.querySelector('activity-input');
     activityInputElem?.addEventListener('publish', publishActivity);
 
     let activityListElem = document.getElementById('activityList');
-    activityListElem?.addEventListener('reaction', reactionChanged);
+    document.addEventListener('publish', (evt) => {
+        console.log("publish");
+    });
     activityListElem?.addEventListener('reply', replyToActivity);
     activityListElem?.addEventListener('comment', commentOnActivity);
     activityListElem?.addEventListener('share', shareActivity);

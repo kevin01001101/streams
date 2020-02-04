@@ -10,6 +10,54 @@ import { DecorationSet, Decoration } from 'prosemirror-view'
 import { Plugin } from 'prosemirror-state'
 
 
+
+class SelectionSizeTooltip {
+    tooltip;
+
+    constructor(view) {
+      this.tooltip = document.createElement("div")
+      this.tooltip.className = "tooltip"
+      this.tooltip.textContent = "This is some text";
+      view.dom.parentNode.appendChild(this.tooltip)
+  
+      this.update(view, null)
+    }
+  
+    update(view, lastState) {
+        return;
+        
+      let state = view.state
+      // Don't do anything if the document/selection didn't change
+      if (lastState && lastState.doc.eq(state.doc) &&
+          lastState.selection.eq(state.selection)) return
+  
+      // Hide the tooltip if the selection is empty
+      if (state.selection.empty) {
+        this.tooltip.style.display = "none"
+        return
+      }
+  
+      // Otherwise, reposition it and update its content
+      this.tooltip.style.display = ""
+      let {from, to} = state.selection
+      // These are in screen coordinates
+      let start = view.coordsAtPos(from), end = view.coordsAtPos(to)
+      // The box in which the tooltip is positioned, to use as base
+      let box = this.tooltip.offsetParent.getBoundingClientRect()
+      // Find a center-ish x position from the selection endpoints (when
+      // crossing lines, end may be more to the left)
+      let left = Math.max((start.left + end.left) / 2, start.left + 3)
+      this.tooltip.style.left = (left - box.left) + "px"
+      this.tooltip.style.bottom = (box.bottom - start.top) + "px"
+      this.tooltip.textContent = to - from
+    }
+  
+    destroy() { this.tooltip.remove() }
+  }
+
+
+
+
 const _activityInputTemplate = document.createElement('template');
 _activityInputTemplate.innerHTML = `
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -23,13 +71,16 @@ _activityInputTemplate.innerHTML = `
     .editor {
         margin-bottom:0.4rem;
         padding-top:0;
-        height:10rem;
-        max-height:15rem;
-        overflow-y:auto;
       }
       .ProseMirror {
           line-height:1.4;
       }
+
+      .ProseMirror[contenteditable] {
+        max-height:10rem;
+        overflow-y:auto;
+      }
+
       .prosemirror-mention-node {
           color:blue;
           font-family:Arial, Helvetica, sans-serif
@@ -112,6 +163,11 @@ export class ActivityInput extends HTMLElement {
     })
 
     initialize() {
+
+        let selectionSizePlugin = new Plugin({
+            view(editorView) { return new SelectionSizeTooltip(editorView) }
+          });
+
         // Mix the nodes from prosemirror-schema-list into the basic schema to
         // create a schema with list support.
         this._schema = new Schema({
@@ -121,12 +177,19 @@ export class ActivityInput extends HTMLElement {
         this._plugins = exampleSetup({schema: this._schema});
         this._plugins.unshift(this.mentionPlugin); // push it before keymap plugin to override keydown handlers
         this._plugins.push(this._placeholderPlugin);
+        this._plugins.push(selectionSizePlugin);
 
         this._state = this.getNewEditorState();
         // let ep = new EditorProps();
         // ep.
         this._view = new EditorView(this.shadowRoot?.querySelector('.editor'), {
-            state: this._state
+            state: this._state,
+            props: {
+                decorations: (state) => {
+                    console.log("decorations: ", state);
+                    return;
+                }
+            }
             // state: EditorState.fromJSON({
             //         doc: DOMParser.fromSchema(mySchema).parse(document.createElement('p')),
             //         schema: mySchema,
