@@ -5,141 +5,153 @@ import {schema} from "prosemirror-schema-basic"
 import {addListNodes} from "prosemirror-schema-list"
 import {exampleSetup} from "prosemirror-example-setup"
 import {addMentionNodes, addTagNodes, getMentionsPlugin} from 'prosemirror-mentions'
-
 import { DecorationSet, Decoration } from 'prosemirror-view'
 import { Plugin } from 'prosemirror-state'
 
+import { html, render, TemplateResult } from 'lit-html';
 
+class EmbeddableActivityItem {
+    // activity?:ActivityItem;
 
-class SelectionSizeTooltip {
-    tooltip;
-
-    constructor(view) {
-      this.tooltip = document.createElement("div")
-      this.tooltip.className = "tooltip"
-      this.tooltip.textContent = "This is some text";
-      view.dom.parentNode.appendChild(this.tooltip)
-  
-      this.update(view, null)
+    constructor(view) {        
+        this.update(view, null)
     }
-  
+
     update(view, lastState) {
-        return;
+        let editorElem = view.dom.closest('.editor');
+        let activityElem = editorElem.querySelector('activity-item');
+        if (activityElem != undefined) { activityElem.remove(); }
         
-      let state = view.state
-      // Don't do anything if the document/selection didn't change
-      if (lastState && lastState.doc.eq(state.doc) &&
-          lastState.selection.eq(state.selection)) return
-  
-      // Hide the tooltip if the selection is empty
-      if (state.selection.empty) {
-        this.tooltip.style.display = "none"
-        return
-      }
-  
-      // Otherwise, reposition it and update its content
-      this.tooltip.style.display = ""
-      let {from, to} = state.selection
-      // These are in screen coordinates
-      let start = view.coordsAtPos(from), end = view.coordsAtPos(to)
-      // The box in which the tooltip is positioned, to use as base
-      let box = this.tooltip.offsetParent.getBoundingClientRect()
-      // Find a center-ish x position from the selection endpoints (when
-      // crossing lines, end may be more to the left)
-      let left = Math.max((start.left + end.left) / 2, start.left + 3)
-      this.tooltip.style.left = (left - box.left) + "px"
-      this.tooltip.style.bottom = (box.bottom - start.top) + "px"
-      this.tooltip.textContent = to - from
+        if (view.props.embeddedElem) {
+            editorElem.appendChild(view.props.embeddedElem);
+            console.log("appended the activity item to the DOM");
+        }
+        // console.log(view);
+        console.log("Update is called");
+        return; 
     }
-  
-    destroy() { this.tooltip.remove() }
-  }
 
-
-
-
-const _activityInputTemplate = document.createElement('template');
-_activityInputTemplate.innerHTML = `
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link rel="stylesheet" href="src/css/style.css" id="styles">
-    <link rel="stylesheet" href="src/css/editor.css" id="editorStyles">
-    <style type="text/css">
-    :host {
-        margin-top:1rem;
-        margin-bottom:2rem;
-    }
-    .editor {
-        margin-bottom:0.4rem;
-        padding-top:0;
-      }
-      .ProseMirror {
-          line-height:1.4;
-      }
-
-      .ProseMirror[contenteditable] {
-        max-height:10rem;
-        overflow-y:auto;
-      }
-
-      .prosemirror-mention-node {
-          color:blue;
-          font-family:Arial, Helvetica, sans-serif
-      }
-      .prosemirror-tag-node {
-          background-color: rgba(192,192,192,0.6);
-          border-radius:4px;
-          padding:0.2rem;
-      }
-
-      .ProseMirror .placeholder {
-        color: #aaa;
-        pointer-events: none;
-        height: 0;
-      }
-
-      .ProseMirror:focus .placeholder {
-        display: none;
-      }
-      .ProseMirror .empty-node::before {
-        position: absolute;
-        color: #aaa;
-        cursor: text;
-      }
-
-      .ProseMirror .empty-node:hover::before {
-        color: #777;
-      }
-
-      .ProseMirror p.empty-node:first-child::before {
-        content: 'type your activity details here';
-      }
-
-
-    </style>
-
-        <div class="editor"></div>
-
-        <button class="publish btn btn-sm btn-primary">publish</button>
-        <button class="reset btn btn-sm btn-secondary">reset</button>
-`;
+    // destroy() { 
+    //     console.log("Destroy()");
+    //     if (this.activity) {
+    //         this.activity.remove();
+    //     }
+    // }
+}
 
 export class ActivityInput extends HTMLElement {
+    _shadowRoot: ShadowRoot;
     _plugins: any[] = [];
     _schema;
     _view: EditorView;
     _state: EditorState;
+    _activityItemPlugin: Plugin;
+    
+    get embedded(): HTMLElement | undefined {
+        return this._view.props.embeddedElem;
+    }
+    set embedded(newValue) {
+        console.log("New value for embedded: ", newValue);
+        //this._activityItemPlugin.activity = newValue;
+        //this._embedded = newValue;
+        this._view.setProps({"embeddedElem":newValue});
+        //this._view.update();
+        //this._update();
+    }
+    
 
     constructor() {
         super();
-        this.attachShadow({mode:'open'});
-        this.style.display = 'none';
-        this.shadowRoot?.appendChild(_activityInputTemplate.content.cloneNode(true));
-        this.shadowRoot?.querySelector('#editorStyles')?.addEventListener('load', () => {
-            console.log("proseMirror styles loaded");
-            this.initialize();
-        });
+        this._shadowRoot = this.attachShadow({mode:'open'});
+
+        //this.style.display = 'none';
+        //this.shadowRoot?.appendChild(_activityInputTemplate.content.cloneNode(true));
+        // this.shadowRoot?.querySelector('#editorStyles')?.addEventListener('load', () => {
+        //     console.log("proseMirror styles loaded");
+        //     this.initialize();
+        // });
     }
 
+    connectedCallback() {
+        console.log('connectedCallback');
+        
+        this._update();
+        this.initialize();
+    }
+
+    _update() {
+        render(this._template(), this._shadowRoot);
+    }
+    
+
+    _template(): TemplateResult {
+        return html`<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="src/css/style.css" id="styles">
+        <link rel="stylesheet" href="src/css/editor.css" id="editorStyles">
+        <style type="text/css">
+        :host {
+            margin-top:1rem;
+            margin-bottom:2rem;
+        }
+        .editor {
+            margin-bottom:0.4rem;
+            padding-top:0;
+          }
+          .ProseMirror {
+              line-height:1.4;
+          }
+    
+          .ProseMirror[contenteditable] {
+            max-height:10rem;
+            overflow-y:auto;
+          }
+    
+          .prosemirror-mention-node {
+              color:blue;
+              font-family:Arial, Helvetica, sans-serif
+          }
+          .prosemirror-tag-node {
+              background-color: rgba(192,192,192,0.6);
+              border-radius:4px;
+              padding:0.2rem;
+          }
+    
+          .ProseMirror .placeholder {
+            color: #aaa;
+            pointer-events: none;
+            height: 0;
+          }
+    
+          .ProseMirror:focus .placeholder {
+            display: none;
+          }
+          .ProseMirror .empty-node::before {
+            position: absolute;
+            color: #aaa;
+            cursor: text;
+          }
+    
+          .ProseMirror .empty-node:hover::before {
+            color: #777;
+          }
+    
+          .ProseMirror p.empty-node:first-child::before {
+            content: 'type your activity details here';
+          }
+    
+    
+        </style>
+            <form>
+                <select class="custom-select custom-select-sm mb-1" style="width:70%;">
+                    <option>CLASSIFICATION A</option>
+                    <option>CLASSIFICATION B</option>
+                    <option>CLASSIFICATION C</option>
+                </select>
+            </form>
+            <div class="editor"></div>
+            <button @click=${this.publish} class="publish btn btn-sm btn-primary">publish</button>
+            <button @click=${this.reset} class="reset btn btn-sm btn-secondary">reset</button>`;    
+    }
 
     _placeholderPlugin = new Plugin({
         props: {
@@ -160,12 +172,13 @@ export class ActivityInput extends HTMLElement {
                 return DecorationSet.create(state.doc, decorations)
             },
         },
-    })
+    });
 
     initialize() {
 
-        let selectionSizePlugin = new Plugin({
-            view(editorView) { return new SelectionSizeTooltip(editorView) }
+        this._activityItemPlugin = new Plugin({
+            props: {"doogle": false},
+            view(editorView) { return new EmbeddableActivityItem(editorView) }
           });
 
         // Mix the nodes from prosemirror-schema-list into the basic schema to
@@ -177,19 +190,11 @@ export class ActivityInput extends HTMLElement {
         this._plugins = exampleSetup({schema: this._schema});
         this._plugins.unshift(this.mentionPlugin); // push it before keymap plugin to override keydown handlers
         this._plugins.push(this._placeholderPlugin);
-        this._plugins.push(selectionSizePlugin);
+        this._plugins.push(this._activityItemPlugin);
 
         this._state = this.getNewEditorState();
-        // let ep = new EditorProps();
-        // ep.
         this._view = new EditorView(this.shadowRoot?.querySelector('.editor'), {
-            state: this._state,
-            props: {
-                decorations: (state) => {
-                    console.log("decorations: ", state);
-                    return;
-                }
-            }
+            state: this._state
             // state: EditorState.fromJSON({
             //         doc: DOMParser.fromSchema(mySchema).parse(document.createElement('p')),
             //         schema: mySchema,
@@ -197,9 +202,16 @@ export class ActivityInput extends HTMLElement {
             //     }, JSON.parse(this._initialState))
         });
 
+        //console.log(this._view);
+        //this._view.setProps({"isEmbedded":this._embedded != undefined});
+        let menubar = <HTMLElement>this.shadowRoot?.querySelector('.ProseMirror-menubar');
+        menubar.style.removeProperty('min-height');
+        
+        console.log(this._view);
         let svg = document.getElementById('ProseMirror-icon-collection');
         if (svg) this.shadowRoot?.appendChild(svg);
         this.style.display = 'block';
+
         this.myFocus();        
     }
 
@@ -223,11 +235,6 @@ export class ActivityInput extends HTMLElement {
         console.log(document.activeElement);
     }
 
-    connectedCallback() {
-        console.log('connectedCallback');
-        this.shadowRoot?.querySelector('button.publish')?.addEventListener('click', this.publish);
-        this.shadowRoot?.querySelector('button.reset')?.addEventListener('click', this.reset);        
-    }
 
     getNewEditorState = () => {
         return EditorState.create({
@@ -244,16 +251,18 @@ export class ActivityInput extends HTMLElement {
             //"contentJson": JSON.stringify(this._view.state.toJSON())
             "contentHtml": (this.shadowRoot?.querySelector('.ProseMirror') as HTMLElement).innerHTML
         }
-        this.dispatchEvent(new CustomEvent('publish', { bubbles: true, detail: data }));
+        this.dispatchEvent(new CustomEvent('publishActivity', { bubbles: true, detail: data }));
     }
 
     reset = () => {
         console.log("clicked reset");
+        this.embedded = undefined;
+
         this._state = this.getNewEditorState();
         this._view.updateState(this._state);
-        let editor = this.shadowRoot?.querySelector('.ProseMirror.ProseMirror-example-setup-style');
-
+//        this._update();       
         this.myFocus();
+        this.dispatchEvent(new CustomEvent('resetActivity', { bubbles: true }));        
     }
 
     /**

@@ -1,13 +1,22 @@
 import { Reaction } from "../models/activity";
 import { html, render, TemplateResult } from 'lit-html';
+import { classMap } from 'lit-html/directives/class-map.js';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 import { DateTime } from "luxon";
+
 import { ActivityInput } from './activityInput.js';
 
 
 export class ActivityItem extends HTMLElement {
 
   _shadowRoot: ShadowRoot;
+
+  get activityId() {
+    return this.getAttribute('activity-id');
+  }
+  set activityId(newValue) {
+    if (newValue) { this.setAttribute('activity-id', newValue); }
+  }
 
   get authorId() {
     return this.getAttribute('author-id');
@@ -31,6 +40,29 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('timestamp', newValue.toISO()); }
   }
 
+  get hideControls(): boolean {
+    return this.hasAttribute('hide-controls');
+  }
+  set hideControls(newValue) {
+    if (newValue) { this.setAttribute('hide-controls', ''); }
+    else { this.removeAttribute('hide-controls'); }
+  }
+
+  get isNew(): boolean {
+    return this.hasAttribute('new');
+  }
+  set isNew(newValue) {
+    if (newValue) { this.setAttribute('new', ''); }
+    else { this.removeAttribute('new'); }
+  }
+  get isReplying(): boolean {
+    return this.hasAttribute('replying');
+  }
+  set isReplying(newValue) {
+    if (newValue) { this.setAttribute('replying', ''); }
+    else { this.removeAttribute('replying'); }
+  }
+  
   // get reactions() {
   //   return this._reactions;
   // }
@@ -48,7 +80,10 @@ export class ActivityItem extends HTMLElement {
   content: string = "";
   reactions: Reaction[] = [];
   replies: ActivityItem[] = [];
-  _isReplying: boolean = false;
+  //_isReplying: boolean = false;
+  //hideControls: boolean = false;
+  //_isNew: boolean = false;
+  //_renderState: number = 0; // ("Replying", "Restreaming", )
   //commentEditor: ActivityInput | null = null;
 
 
@@ -69,6 +104,9 @@ export class ActivityItem extends HTMLElement {
 
         .activity.card {
           margin:0.5rem;
+        }
+        .activity.card.new {
+          filter: drop-shadow(4px 4px 8px blue);
         }
 
         .card-header {
@@ -115,6 +153,10 @@ export class ActivityItem extends HTMLElement {
           padding:0 0.2rem;
         }
 
+        :host([hide-controls]) .card-footer {
+          display:none;          
+        }
+
         .card-footer .reactions button {
           border-color:transparent;
         }
@@ -153,10 +195,14 @@ export class ActivityItem extends HTMLElement {
         }
 
         </style>
-      <div class="activity card" data-id="${this.id}" @publish=${this.publishHandler}>
+      <div class="activity card ${classMap({"replying":this.isReplying, "new":this.isNew, "hideControls":this.hideControls})}" @publishActivity=${this.publishHandler} @resetActivity=${this.resetHandler} dir="ltr">
         <div class="card-header">
           <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
           <div class="author ml-1">${this.authorName}</div>
+          <span @click=${this.shareHandler} class="share showOnHover">
+            <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i>
+          </span>
+
           <span class="bookmark control badge badge-pill badge-light">
             <i class="ms-Icon ms-Icon--AddBookmark" aria-hidden="true"></i>
           </span>
@@ -188,32 +234,41 @@ export class ActivityItem extends HTMLElement {
               <span class="sr-only">happy responses</span>
             </button>
           </div>
-          <button type="button" @click=${this.restreamHandler} class="restream showOnHover btn btn-sm btn-outline-secondary">
-            <i class="ms-Icon ms-Icon--NoteReply" aria-hidden="true"></i><span>Restream</span>
+          <button type="button" title="Restream this activity" @click=${this.restreamHandler} class="restream showOnHover btn btn-sm btn-outline-secondary">
+            <i class="ms-Icon ms-Icon--ReplyAllMirrored" aria-hidden="true"></i><span>Restream</span>
           </button>
-          <button type="button" @click=${this.commentHandler} class="comment showOnHover btn btn-sm btn-outline-secondary">
-            <i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Comment</span>
+          <button type="button" title="Comment on this activity" @click=${this.commentHandler} class="reply showOnHover btn btn-sm btn-outline-secondary">
+            <i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Reply</span>
           </button>
-          <button type="button" @click=${this.shareHandler} class="share showOnHover btn btn-sm btn-outline-secondary">
-            <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i><span>Share</span>
+          <button type="button" title="View comments" @click=${this.commentHandler} class="comments btn btn-sm btn-outline-secondary">
+            <i class="ms-Icon ms-Icon--Comment" aria-hidden="true"></i>
+            <span class="badge badge-light">9</span>
           </button>
         </div>
-        ${(this._isReplying ? html`<activity-input></activity-input>` : ``)}
+
+        ${(this.isReplying ? html`<activity-input></activity-input>` : ``)}
       </div>
     `;
   }
 
-  restreamHandler(evt: Event) {
+
+  restreamHandler = (evt: Event) => {
     console.log("Clicked to restream ", evt);
-      this.dispatchEvent(new CustomEvent('reply', { bubbles: true }));
+
+    this.dispatchEvent(new CustomEvent('restreamActivity', { 
+      bubbles: true, 
+      detail: {      
+        activityElem: this
+      }
+    }));
   }
 
   commentHandler = (evt:Event) => {
-    if (this._isReplying == true) return;
+    if (this.isReplying == true) return;
 
     console.log("Clicked to comment ", evt);
-    this._isReplying = true;
-    this._update();
+    this.isReplying = true;
+    //this._update();
   }
 
   shareHandler(evt:Event) {
@@ -250,8 +305,13 @@ export class ActivityItem extends HTMLElement {
         parentId: this.id,
         details: "message details"
       } 
-    }));
-    
+    }));    
+  }
+
+  resetHandler = (evt:Event) => {
+    console.log("reset event received by Item");
+    evt.stopPropagation();
+    this.isReplying = false;
   }
 
   connectedCallback() {
@@ -264,7 +324,7 @@ export class ActivityItem extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['author-id', 'author-name'];
+    return ['author-id', 'author-name', 'hide-controls', 'new', 'replying'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -277,11 +337,21 @@ export class ActivityItem extends HTMLElement {
       case 'author-name':
         this.authorName = newValue;
         break;
+      case 'hide-controls':
+        this.hideControls = newValue != undefined;
+        break;
+      case 'new':
+        this.isNew = newValue != undefined;
+        break;
+      case 'replying':
+        this.isReplying = newValue != undefined;
+        break;
       case 'timestamp':
         this.timestamp = newValue;
         break;
       // case 'reaction':
       //   break;
     }
+    this._update();
   }
 }

@@ -76,8 +76,21 @@ const reactionChanged = (evt:Event) =>{
     console.log("Reaction has been updated...");
 }
 
-const replyToActivity = (evt:Event) => {
-    console.log("Publishing the rpely...", (evt as CustomEvent).detail);
+const restreamActivity = (evt:Event) => {
+    console.log("set the activity input box with the activity item ", (evt as CustomEvent).detail);
+    let activityInput = <ActivityInput>document.getElementsByTagName('activity-input')[0];
+    
+    // idea:
+    //  get the activity id, get the activity data, build new activityitem from that
+
+    // really better off to create a new Activity-Input element with values than cloning an existing node
+    let sourceActivity = evt.target as ActivityItem;
+    let clonedActivity = <ActivityItem>sourceActivity.cloneNode(false);   
+    clonedActivity.isReplying = false; 
+    clonedActivity.content = sourceActivity.content;
+    clonedActivity.hideControls = true;
+    activityInput.embedded = clonedActivity;
+    console.log("set embedded property");
 }
 
 const commentOnActivity = (evt: Event) => {
@@ -103,11 +116,8 @@ window.addEventListener('DOMContentLoaded', () => {
     activityInputElem?.addEventListener('publish', publishActivity);
 
     let activityListElem = document.getElementById('activityList');
-    document.addEventListener('publish', (evt) => {
-        console.log("publish");
-    });
-    activityListElem?.addEventListener('reply', replyToActivity);
-    activityListElem?.addEventListener('comment', commentOnActivity);
+    activityListElem?.addEventListener('restreamActivity', restreamActivity);
+
     activityListElem?.addEventListener('share', shareActivity);
 
     // fetch the items from the current feed
