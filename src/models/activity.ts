@@ -1,11 +1,11 @@
 import { DateTime } from 'luxon';
 import { Entity } from './entity';
-import { Rating } from './rating';
+//import { Rating } from './rating';
 
 export enum Reaction { None, Happy, Sad, Confused };
 
 export interface ActivityApiResponse {
-    id: number;
+    id: string; // guid
     htmlContent: string;
     created: string;
     authorId: string;

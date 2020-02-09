@@ -1,10 +1,12 @@
 import { Entity } from './models/entity.js';
-import { render } from 'lit-html';
 import { ActivityInput } from './components/activityInput.js';
 import { ActivityItem } from './components/activityItem.js';
 import { ActivityApiResponse } from './models/activity.js';
-import { ActivityList } from './components/activityList.js';
 import { DateTime } from 'luxon';
+import { Reactions } from './models/enums.js';
+
+import { render } from 'lit-html';
+import { ActivityList } from './components/activityList.js';
 import { htmlEscape, htmlUnescape } from './utilities.js';
 
 
@@ -74,6 +76,30 @@ const publishActivity = (evt:Event) => {
 
 const reactionChanged = (evt:Event) =>{
     console.log("Reaction has been updated...");
+    // should pass the old value and the new value
+    let newReaction = (evt as CustomEvent).detail;
+    
+    if (newReaction != undefined) {
+
+        fetch('https://localhost:44387/api/reactions', {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Access-Control-Expose-Headers': 'Location'
+            },
+            body: JSON.stringify({
+                activityId: (evt.target as ActivityItem).activityId,
+                type: newReaction 
+            })
+        })
+        .then((response) => {
+            console.log("POST REACTION:");
+            console.log(response.ok);
+            console.log(response.status);            
+        });
+    }
 }
 
 const restreamActivity = (evt:Event) => {
@@ -117,7 +143,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     let activityListElem = document.getElementById('activityList');
     activityListElem?.addEventListener('restreamActivity', restreamActivity);
-
+    activityListElem?.addEventListener('reactionChange', reactionChanged);
     activityListElem?.addEventListener('share', shareActivity);
 
     // fetch the items from the current feed
@@ -142,6 +168,7 @@ window.addEventListener('DOMContentLoaded', () => {
         let activityListElem = document.getElementById('activityList');
         activityListElem?.append(...data.activities.map(a => {
             let item = new ActivityItem();
+            item.activityId = a.id;
             item.authorId = a.authorId;
             item.authorName = _people.get(a.authorId)?.displayName ?? "";
             item.content = htmlUnescape(a.htmlContent);

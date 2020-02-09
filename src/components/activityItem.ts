@@ -213,25 +213,25 @@ export class ActivityItem extends HTMLElement {
         </div>
         <div class="card-footer">
           <div class="reactions" @click=${this.reactionHandler}>
-            <button type="button" class="btn btn-sm btn-outline-secondary">
-              <span class="emoji happy">😀</span>
+            <button type="button" data-reaction="happy" class="btn btn-sm btn-outline-secondary">
+              <span class="emoji">😀</span>
               <span class="badge badge-light">9</span>
-              <span class="sr-only">happy responses</span>
+              <span class="sr-only">happy response</span>
             </button>
-            <button type="button" class="active btn btn-sm btn-outline-secondary">
-              <span class="emoji upset">😿</span>
+            <button type="button" data-reaction="upset" class="active btn btn-sm btn-outline-secondary">
+              <span class="emoji">😿</span>
               <span class="badge badge-light">9</span>
-              <span class="sr-only">happy responses</span>
+              <span class="sr-only">upset response</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">
-              <span class="emoji confused">😵</span>
+            <button type="button" data-reaction="confused" class="btn btn-sm btn-outline-secondary">
+              <span class="emoji">😵</span>
               <span class="badge badge-light"></span>
-              <span class="sr-only">happy responses</span>
+              <span class="sr-only">confused response</span>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">
-              <span class="emoji clap">❤</span>
+            <button type="button" data-reaction="heart" class="btn btn-sm btn-outline-secondary">
+              <span class="emoji">❤</span>
               <span class="badge badge-light">9</span>
-              <span class="sr-only">happy responses</span>
+              <span class="sr-only">heart response</span>
             </button>
           </div>
           <button type="button" title="Restream this activity" @click=${this.restreamHandler} class="restream showOnHover btn btn-sm btn-outline-secondary">
@@ -292,8 +292,9 @@ export class ActivityItem extends HTMLElement {
       buttonElem.classList.add('active');
     }
 
-    let currentlySelectedEmojiBtn = this.shadowRoot?.querySelector('.reactions button.active');
-    this.dispatchEvent(new CustomEvent('reaction', { bubbles: true, detail: currentlySelectedEmojiBtn }));
+    let selectedReactionBtn = this.shadowRoot?.querySelector('.reactions button.active');
+    let currentReaction = selectedReactionBtn?.getAttribute('data-reaction');
+    this.dispatchEvent(new CustomEvent('reactionChange', { bubbles: true, detail: currentReaction }));
   }
 
   publishHandler = (evt:Event) => {
@@ -330,9 +331,11 @@ export class ActivityItem extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue == newValue) return;
     switch (name) {
+      case 'activity-id':
+        this.activityId = newValue;
+        break;
       case 'author-id':
         this.authorId = newValue;
-        //this.setAttribute('author-id', newValue);
         break;
       case 'author-name':
         this.authorName = newValue;
