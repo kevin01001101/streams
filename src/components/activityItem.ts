@@ -1,15 +1,13 @@
-import { Reaction } from "../models/activity";
+import { Reactions } from "../models/enums.js";
 import { html, render, TemplateResult } from 'lit-html';
 import { classMap } from 'lit-html/directives/class-map.js';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 import { DateTime } from "luxon";
 
-import { ActivityInput } from './activityInput.js';
-
-
 export class ActivityItem extends HTMLElement {
 
   _shadowRoot: ShadowRoot;
+  _previousReaction: string;
 
   get activityId() {
     return this.getAttribute('activity-id');
@@ -40,6 +38,13 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('timestamp', newValue.toISO()); }
   }
 
+  get reaction() {
+    return this.getAttribute('reaction');    
+  }
+  set reaction(newValue) {
+    if (newValue) { this.setAttribute('reaction', newValue); }
+  }
+
   get hideControls(): boolean {
     return this.hasAttribute('hide-controls');
   }
@@ -55,6 +60,7 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('new', ''); }
     else { this.removeAttribute('new'); }
   }
+
   get isReplying(): boolean {
     return this.hasAttribute('replying');
   }
@@ -63,33 +69,20 @@ export class ActivityItem extends HTMLElement {
     else { this.removeAttribute('replying'); }
   }
   
-  // get reactions() {
-  //   return this._reactions;
-  // }
-  // set reactions(reactions: Reaction[]) {
-  //   this._reactions = reactions
-  // }
-
-  // get replies() {
-  //   return this._replies;
-  // }
-  // set replies(replies: ActivityItem[]) {
-  //   this._replies = replies;
-  // }
 
   content: string = "";
-  reactions: Reaction[] = [];
+  reactions: Map<Reactions, number> = new Map<Reactions, number>();
   replies: ActivityItem[] = [];
-  //_isReplying: boolean = false;
-  //hideControls: boolean = false;
-  //_isNew: boolean = false;
-  //_renderState: number = 0; // ("Replying", "Restreaming", )
-  //commentEditor: ActivityInput | null = null;
 
 
   constructor() {
     super();
     this._shadowRoot = this.attachShadow({mode:'open'});
+    this._previousReaction = '';
+    this.reactions[Reactions.Happy] = Math.floor(Math.random()*10);
+    this.reactions[Reactions.Upset] = Math.floor(Math.random()*10);
+    this.reactions[Reactions.Confused] = Math.floor(Math.random()*10);
+    this.reactions[Reactions.Heart] = Math.floor(Math.random()*10);
   }
 
   _template(): TemplateResult {
@@ -213,22 +206,22 @@ export class ActivityItem extends HTMLElement {
         </div>
         <div class="card-footer">
           <div class="reactions" @click=${this.reactionHandler}>
-            <button type="button" data-reaction="happy" class="btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="happy" class="${classMap({"active":this.reaction == "happy"})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😀</span>
               <span class="badge badge-light">9</span>
               <span class="sr-only">happy response</span>
             </button>
-            <button type="button" data-reaction="upset" class="active btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="upset" class="${classMap({"active":this.reaction == "upset"})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😿</span>
               <span class="badge badge-light">9</span>
               <span class="sr-only">upset response</span>
             </button>
-            <button type="button" data-reaction="confused" class="btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="confused" class="${classMap({"active":this.reaction == "confused"})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😵</span>
               <span class="badge badge-light"></span>
               <span class="sr-only">confused response</span>
             </button>
-            <button type="button" data-reaction="heart" class="btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="heart" class="${classMap({"active":this.reaction == "heart"})} btn btn-sm btn-outline-secondary">
               <span class="emoji">❤</span>
               <span class="badge badge-light">9</span>
               <span class="sr-only">heart response</span>
@@ -282,19 +275,25 @@ export class ActivityItem extends HTMLElement {
     if (buttonElem == null) return;
 
     console.log("an emoji was selected");
+    let previousSelection = this.shadowRoot?.querySelector('.reactions button.active');
+
     // Functions like radio buttons, but (unlike radio buttns) allows one to unselect the only selected item
-    if (buttonElem.classList.contains('active')) {
+    if (previousSelection == buttonElem) {
       buttonElem.classList.remove('active');
     } else {
-      this.shadowRoot?.querySelectorAll('.reactions button').forEach(elem => {
-        elem.classList.remove('active');
-      });
+      previousSelection?.classList.remove('active');
       buttonElem.classList.add('active');
     }
 
     let selectedReactionBtn = this.shadowRoot?.querySelector('.reactions button.active');
     let currentReaction = selectedReactionBtn?.getAttribute('data-reaction');
-    this.dispatchEvent(new CustomEvent('reactionChange', { bubbles: true, detail: currentReaction }));
+    this.dispatchEvent(new CustomEvent('reactionChange', { 
+      bubbles: true, 
+      detail: {
+        currentReaction,
+        previousReaction: previousSelection?.getAttribute('data-reaction')          
+      } 
+    }));
   }
 
   publishHandler = (evt:Event) => {
@@ -325,7 +324,7 @@ export class ActivityItem extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['author-id', 'author-name', 'hide-controls', 'new', 'replying'];
+    return ['author-id', 'author-name', 'reaction', 'hide-controls', 'new', 'replying'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -339,6 +338,9 @@ export class ActivityItem extends HTMLElement {
         break;
       case 'author-name':
         this.authorName = newValue;
+        break;
+      case 'reaction':
+        this.reaction = newValue;
         break;
       case 'hide-controls':
         this.hideControls = newValue != undefined;
@@ -356,5 +358,10 @@ export class ActivityItem extends HTMLElement {
       //   break;
     }
     this._update();
+  }
+
+  undoReactionChange = (reason) => {
+    this.reaction = this._previousReaction;
+    console.warn("Undo Reaction Change.  Reason: ", reason);
   }
 }

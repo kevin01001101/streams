@@ -77,8 +77,10 @@ const publishActivity = (evt:Event) => {
 const reactionChanged = (evt:Event) =>{
     console.log("Reaction has been updated...");
     // should pass the old value and the new value
-    let newReaction = (evt as CustomEvent).detail;
-    
+    let newReaction = (evt as CustomEvent).detail.currentReaction;
+    let prevReaction = (evt as CustomEvent).detail.previousReaction;
+    let activityElem = <ActivityItem>evt.target;
+
     if (newReaction != undefined) {
 
         fetch('https://localhost:44387/api/reactions', {
@@ -97,7 +99,11 @@ const reactionChanged = (evt:Event) =>{
         .then((response) => {
             console.log("POST REACTION:");
             console.log(response.ok);
-            console.log(response.status);            
+            console.log(response.status);
+        })
+        .catch((reason) => {
+            // undo the reaction change, since it didn't stick.
+            activityElem.undoReactionChange(reason);
         });
     }
 }
