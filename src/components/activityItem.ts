@@ -1,4 +1,4 @@
-import { Reactions } from "../models/enums.js";
+import { Reaction } from "../models/enums.js";
 import { html, render, TemplateResult } from 'lit-html';
 import { classMap } from 'lit-html/directives/class-map.js';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
@@ -39,7 +39,7 @@ export class ActivityItem extends HTMLElement {
   }
 
   get reaction() {
-    return this.getAttribute('reaction');    
+    return this.getAttribute('reaction');
   }
   set reaction(newValue) {
     if (newValue) { this.setAttribute('reaction', newValue); }
@@ -68,10 +68,10 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('replying', ''); }
     else { this.removeAttribute('replying'); }
   }
-  
+
 
   content: string = "";
-  reactions: Map<Reactions, number> = new Map<Reactions, number>();
+  reactions: Map<Reaction, number> = new Map<Reaction, number>();
   replies: ActivityItem[] = [];
 
 
@@ -79,10 +79,10 @@ export class ActivityItem extends HTMLElement {
     super();
     this._shadowRoot = this.attachShadow({mode:'open'});
     this._previousReaction = '';
-    this.reactions[Reactions.Happy] = Math.floor(Math.random()*10);
-    this.reactions[Reactions.Upset] = Math.floor(Math.random()*10);
-    this.reactions[Reactions.Confused] = Math.floor(Math.random()*10);
-    this.reactions[Reactions.Heart] = Math.floor(Math.random()*10);
+    this.reactions[Reaction.Happy] = Math.floor(Math.random()*10);
+    this.reactions[Reaction.Upset] = Math.floor(Math.random()*10);
+    this.reactions[Reaction.Confused] = Math.floor(Math.random()*10);
+    this.reactions[Reaction.Heart] = Math.floor(Math.random()*10);
   }
 
   _template(): TemplateResult {
@@ -147,7 +147,7 @@ export class ActivityItem extends HTMLElement {
         }
 
         :host([hide-controls]) .card-footer {
-          display:none;          
+          display:none;
         }
 
         .card-footer .reactions button {
@@ -206,24 +206,24 @@ export class ActivityItem extends HTMLElement {
         </div>
         <div class="card-footer">
           <div class="reactions" @click=${this.reactionHandler}>
-            <button type="button" data-reaction="happy" class="${classMap({"active":this.reaction == "happy"})} btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="${Reaction.Happy}" class="${classMap({"active":this.reaction == Reaction.Happy})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😀</span>
-              <span class="badge badge-light">9</span>
+              <span class="badge badge-light">${this.reactions[Reaction.Happy]}</span>
               <span class="sr-only">happy response</span>
             </button>
-            <button type="button" data-reaction="upset" class="${classMap({"active":this.reaction == "upset"})} btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="${Reaction.Upset}" class="${classMap({"active":this.reaction == Reaction.Upset})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😿</span>
-              <span class="badge badge-light">9</span>
+              <span class="badge badge-light">${this.reactions[Reaction.Upset]}</span>
               <span class="sr-only">upset response</span>
             </button>
-            <button type="button" data-reaction="confused" class="${classMap({"active":this.reaction == "confused"})} btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="${Reaction.Confused}" class="${classMap({"active":this.reaction == Reaction.Confused})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😵</span>
-              <span class="badge badge-light"></span>
+              <span class="badge badge-light">${this.reactions[Reaction.Confused]}</span>
               <span class="sr-only">confused response</span>
             </button>
-            <button type="button" data-reaction="heart" class="${classMap({"active":this.reaction == "heart"})} btn btn-sm btn-outline-secondary">
+            <button type="button" data-reaction="${Reaction.Heart}" class="${classMap({"active":this.reaction == Reaction.Heart})} btn btn-sm btn-outline-secondary">
               <span class="emoji">❤</span>
-              <span class="badge badge-light">9</span>
+              <span class="badge badge-light">${this.reactions[Reaction.Heart]}</span>
               <span class="sr-only">heart response</span>
             </button>
           </div>
@@ -248,9 +248,9 @@ export class ActivityItem extends HTMLElement {
   restreamHandler = (evt: Event) => {
     console.log("Clicked to restream ", evt);
 
-    this.dispatchEvent(new CustomEvent('restreamActivity', { 
-      bubbles: true, 
-      detail: {      
+    this.dispatchEvent(new CustomEvent('restreamActivity', {
+      bubbles: true,
+      detail: {
         activityElem: this
       }
     }));
@@ -287,25 +287,25 @@ export class ActivityItem extends HTMLElement {
 
     let selectedReactionBtn = this.shadowRoot?.querySelector('.reactions button.active');
     let currentReaction = selectedReactionBtn?.getAttribute('data-reaction');
-    this.dispatchEvent(new CustomEvent('reactionChange', { 
-      bubbles: true, 
+    this.dispatchEvent(new CustomEvent('reactionChange', {
+      bubbles: true,
       detail: {
         currentReaction,
-        previousReaction: previousSelection?.getAttribute('data-reaction')          
-      } 
+        previousReaction: previousSelection?.getAttribute('data-reaction')
+      }
     }));
   }
 
   publishHandler = (evt:Event) => {
     console.log("Received publish>");
     evt.stopPropagation();
-    this.dispatchEvent(new CustomEvent("reply", { 
+    this.dispatchEvent(new CustomEvent("reply", {
       bubbles: true,
       detail: {
         parentId: this.id,
         details: "message details"
-      } 
-    }));    
+      }
+    }));
   }
 
   resetHandler = (evt:Event) => {

@@ -3,7 +3,7 @@ import { ActivityInput } from './components/activityInput.js';
 import { ActivityItem } from './components/activityItem.js';
 import { ActivityApiResponse } from './models/activity.js';
 import { DateTime } from 'luxon';
-import { Reactions } from './models/enums.js';
+import { Reaction } from './models/enums.js';
 
 import { render } from 'lit-html';
 import { ActivityList } from './components/activityList.js';
@@ -93,7 +93,7 @@ const reactionChanged = (evt:Event) =>{
             },
             body: JSON.stringify({
                 activityId: (evt.target as ActivityItem).activityId,
-                type: newReaction 
+                type: newReaction
             })
         })
         .then((response) => {
@@ -111,14 +111,14 @@ const reactionChanged = (evt:Event) =>{
 const restreamActivity = (evt:Event) => {
     console.log("set the activity input box with the activity item ", (evt as CustomEvent).detail);
     let activityInput = <ActivityInput>document.getElementsByTagName('activity-input')[0];
-    
+
     // idea:
     //  get the activity id, get the activity data, build new activityitem from that
 
     // really better off to create a new Activity-Input element with values than cloning an existing node
     let sourceActivity = evt.target as ActivityItem;
-    let clonedActivity = <ActivityItem>sourceActivity.cloneNode(false);   
-    clonedActivity.isReplying = false; 
+    let clonedActivity = <ActivityItem>sourceActivity.cloneNode(false);
+    clonedActivity.isReplying = false;
     clonedActivity.content = sourceActivity.content;
     clonedActivity.hideControls = true;
     activityInput.embedded = clonedActivity;

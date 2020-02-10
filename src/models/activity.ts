@@ -1,15 +1,14 @@
 import { DateTime } from 'luxon';
 import { Entity } from './entity';
-//import { Rating } from './rating';
+import { Reaction } from './enums.js';
 
-export enum Reaction { None, Happy, Sad, Confused };
 
 export interface ActivityApiResponse {
     id: string; // guid
     htmlContent: string;
     created: string;
     authorId: string;
-    reactions: Reaction[];
+    reactions: Map<Reaction,number>;
     replies: Activity[];
     parent?: number;
 }

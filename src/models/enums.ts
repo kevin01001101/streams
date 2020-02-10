@@ -1,7 +1,7 @@
 
-export enum Reactions {
-    Happy,
-    Upset,
-    Confused,
-    Heart
+export enum Reaction {
+    Happy = "happy",
+    Upset = "upset",
+    Confused = "confused",
+    Heart = "heart"
 };
