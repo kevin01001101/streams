@@ -1,4 +1,5 @@
 import { Entity } from './models/entity.js';
+import { Editor } from './components/editor.js';
 import { ActivityInput } from './components/activityInput.js';
 import { ActivityItem } from './components/activityItem.js';
 import { ActivityApiResponse } from './models/activity.js';
@@ -21,10 +22,18 @@ let _people: Map<string, Entity> = new Map<string, Entity>();
 const publishActivity = (evt:Event) => {
     console.log("New event {0}", evt);
     let publishEvent = evt as CustomEvent;
+
+    let restreamOf = ((evt.target as ActivityInput).embedded as ActivityItem).id;
+    let replyTo = null;
     // publish the activity to the server
     let newActivity = {
-        contentHtml: publishEvent.detail.contentHtml
+        content: publishEvent.detail.content,
+        restreamOf,
+        replyTo
     };
+    //let restreamOf = ((evt.target as HTMLElement).querySelector('activity-item') as ActivityItem).id;
+
+
 
     fetch('https://localhost:44387/api/activities', {
         method: 'POST',
@@ -57,13 +66,14 @@ const publishActivity = (evt:Event) => {
                 })
                 .then((data: ActivityResponse) => {
                     console.log(JSON.stringify(data));
+                    let editor = new Editor();
 
                     let activityListElem = document.getElementById('activityList');
                     activityListElem?.prepend(...data.activities.map(a => {
                         let item = new ActivityItem();
                         item.authorId = a.authorId;
                         item.authorName = _people.get(a.authorId)?.displayName ?? "";
-                        item.content = htmlUnescape(a.htmlContent);
+                        item.content = editor.Deserialize(JSON.parse(a.content));
                         item.timestamp = DateTime.fromISO(a.created as string);
                         item.reactions = a.reactions;
                         return item;
@@ -145,7 +155,7 @@ window.addEventListener('DOMContentLoaded', () => {
     //window.customElements.define('activity-list', ActivityList);
 
     let activityInputElem = document.querySelector('activity-input');
-    activityInputElem?.addEventListener('publish', publishActivity);
+    activityInputElem?.addEventListener('publishActivity', publishActivity);
 
     let activityListElem = document.getElementById('activityList');
     activityListElem?.addEventListener('restreamActivity', restreamActivity);
@@ -170,6 +180,9 @@ window.addEventListener('DOMContentLoaded', () => {
         data.entities.forEach(p => {
             _people.set(p.id, p);
         });
+
+        let editor = new Editor();
+
         //  then display those items in the display area
         let activityListElem = document.getElementById('activityList');
         activityListElem?.append(...data.activities.map(a => {
@@ -177,7 +190,7 @@ window.addEventListener('DOMContentLoaded', () => {
             item.activityId = a.id;
             item.authorId = a.authorId;
             item.authorName = _people.get(a.authorId)?.displayName ?? "";
-            item.content = htmlUnescape(a.htmlContent);
+            item.content = editor.Deserialize(JSON.parse(a.content));
             item.timestamp = DateTime.fromISO(a.created as string);
             item.reactions = a.reactions;
             return item;

@@ -45,6 +45,12 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('reaction', newValue); }
   }
 
+  set reactions(newReactions) {
+    if (newReactions != undefined) {
+      this._reactions = Object.assign(this._reactions, newReactions);
+    }
+  }
+
   get hideControls(): boolean {
     return this.hasAttribute('hide-controls');
   }
@@ -71,7 +77,7 @@ export class ActivityItem extends HTMLElement {
 
 
   content: string = "";
-  reactions: Map<Reaction, number> = new Map<Reaction, number>();
+  _reactions: Map<Reaction, number> = new Map<Reaction, number>();
   replies: ActivityItem[] = [];
 
 
@@ -79,10 +85,12 @@ export class ActivityItem extends HTMLElement {
     super();
     this._shadowRoot = this.attachShadow({mode:'open'});
     this._previousReaction = '';
-    this.reactions[Reaction.Happy] = Math.floor(Math.random()*10);
-    this.reactions[Reaction.Upset] = Math.floor(Math.random()*10);
-    this.reactions[Reaction.Confused] = Math.floor(Math.random()*10);
-    this.reactions[Reaction.Heart] = Math.floor(Math.random()*10);
+
+    this._reactions[Reaction.Happy] = Math.floor(Math.random()*10);
+    this._reactions[Reaction.Upset] = Math.floor(Math.random()*10);
+    this._reactions[Reaction.Confused] = Math.floor(Math.random()*10);
+    this._reactions[Reaction.Heart] = Math.floor(Math.random()*10);
+
   }
 
   _template(): TemplateResult {
@@ -136,15 +144,25 @@ export class ActivityItem extends HTMLElement {
           margin-right:0.6rem;
         }
 
+        .prosemirror-tag-node,
         .prosemirror-mention-node {
-          color:blue;
-          font-family:Arial, Helvetica, sans-serif
+            border-radius:4px;
+            padding:0.1rem 0.2rem;
+            font-family:Arial, Helvetica, sans-serif
         }
         .prosemirror-tag-node {
           background-color: rgba(192,192,192,0.6);
-          border-radius:4px;
-          padding:0 0.2rem;
         }
+        .prosemirror-mention-node {
+          background-color: rgba(183,232,232,0.6);
+        }
+        .prosemirror-tag-node:hover,
+        .prosemirror-mention-node:hover {
+            cursor:pointer;
+            text-decoration:underline;
+          }
+
+
 
         :host([hide-controls]) .card-footer {
           display:none;
@@ -192,13 +210,14 @@ export class ActivityItem extends HTMLElement {
         <div class="card-header">
           <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
           <div class="author ml-1">${this.authorName}</div>
-          <span @click=${this.shareHandler} class="share showOnHover">
+
+          <span @click=${this.shareHandler} class="share control badge badge-pill badge-light showOnHover">
             <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i>
           </span>
-
           <span class="bookmark control badge badge-pill badge-light">
             <i class="ms-Icon ms-Icon--AddBookmark" aria-hidden="true"></i>
           </span>
+
         </div>
         <div class="card-body">
           <div style="text-align:right;"><small class="timestamp text-muted" title="${this.timestamp.toLocaleString(DateTime.DATETIME_SHORT)}">${this.timestamp.toRelative()}</small></div>
@@ -208,22 +227,22 @@ export class ActivityItem extends HTMLElement {
           <div class="reactions" @click=${this.reactionHandler}>
             <button type="button" data-reaction="${Reaction.Happy}" class="${classMap({"active":this.reaction == Reaction.Happy})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😀</span>
-              <span class="badge badge-light">${this.reactions[Reaction.Happy]}</span>
+              <span class="badge badge-light">${this._reactions[Reaction.Happy] > 0 ? this._reactions[Reaction.Happy] : ''}</span>
               <span class="sr-only">happy response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Upset}" class="${classMap({"active":this.reaction == Reaction.Upset})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😿</span>
-              <span class="badge badge-light">${this.reactions[Reaction.Upset]}</span>
+              <span class="badge badge-light">${this._reactions[Reaction.Upset] > 0 ? this._reactions[Reaction.Upset] : ''}</span>
               <span class="sr-only">upset response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Confused}" class="${classMap({"active":this.reaction == Reaction.Confused})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😵</span>
-              <span class="badge badge-light">${this.reactions[Reaction.Confused]}</span>
+              <span class="badge badge-light">${this._reactions[Reaction.Confused] > 0 ? this._reactions[Reaction.Confused] : ''}</span>
               <span class="sr-only">confused response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Heart}" class="${classMap({"active":this.reaction == Reaction.Heart})} btn btn-sm btn-outline-secondary">
               <span class="emoji">❤</span>
-              <span class="badge badge-light">${this.reactions[Reaction.Heart]}</span>
+              <span class="badge badge-light">${this._reactions[Reaction.Heart] > 0 ? this._reactions[Reaction.Heart] : ''}</span>
               <span class="sr-only">heart response</span>
             </button>
           </div>

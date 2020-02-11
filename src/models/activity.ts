@@ -5,7 +5,7 @@ import { Reaction } from './enums.js';
 
 export interface ActivityApiResponse {
     id: string; // guid
-    htmlContent: string;
+    content: string;
     created: string;
     authorId: string;
     reactions: Map<Reaction,number>;
