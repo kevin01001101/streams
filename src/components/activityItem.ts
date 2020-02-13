@@ -88,16 +88,18 @@ export class ActivityItem extends HTMLElement {
   _reactions: Map<Reaction, number> = new Map<Reaction, number>();
   replies: ActivityItem[] = [];
 
+  static Create(activityData) {
+    let newItem =  new ActivityItem();
+    Object.assign(newItem, activityData);
+    return newItem;
+  }
 
   constructor() {
     super();
     this._shadowRoot = this.attachShadow({mode:'open'});
-    this._previousReaction = '';
+    //Object.assign(this, activityData);
 
-    this._reactions[Reaction.Happy] = Math.floor(Math.random()*10);
-    this._reactions[Reaction.Upset] = Math.floor(Math.random()*10);
-    this._reactions[Reaction.Confused] = Math.floor(Math.random()*10);
-    this._reactions[Reaction.Heart] = Math.floor(Math.random()*10);
+    this._previousReaction = '';
   }
 
   _template(): TemplateResult {
