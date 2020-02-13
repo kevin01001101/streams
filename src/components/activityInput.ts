@@ -13,18 +13,18 @@ export class ActivityInput extends HTMLElement {
         //this._activityItemPlugin.activity = newValue;
         //this._embedded = newValue;
         this._editor.SetEmbedded(newValue);
-        //this._view.update();
+        this._editor._view.focus();
         //this._update();
     }
 
     get replyTo(): string | null {
-        return this.getAttribute('data-replyTo');
+        return this.getAttribute('reply-to');
     }
     set replyTo(newValue) {
         if (newValue == null) {
-            this.removeAttribute('data-replyTo');
+            this.removeAttribute('reply-to');
          } else {
-             this.setAttribute('data-replyTo', newValue);
+             this.setAttribute('reply-to', newValue);
          }
     }
 
@@ -38,6 +38,15 @@ export class ActivityInput extends HTMLElement {
         console.log('connectedCallback');
         this._update();
         this._editor.InitializeView(this.shadowRoot?.querySelector('.editor'));
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue == newValue) return;
+        switch (name) {
+          case 'reply-to':
+            this.replyTo = newValue;
+            break;
+        }
     }
 
     _update() {
@@ -104,10 +113,11 @@ export class ActivityInput extends HTMLElement {
           }
 
           .ProseMirror p.empty-node:first-child::before {
-            content: 'type your activity details here';
+            /* content: 'type your activity details here'; */
           }
 
         </style>
+        <input type="hidden" class="focusFix">
             <form>
                 <select class="custom-select custom-select-sm mb-1" style="width:70%;">
                     <option>CLASSIFICATION A</option>
@@ -123,13 +133,12 @@ export class ActivityInput extends HTMLElement {
     publish = (evt:Event) => {
         console.log("clicked on the button");
         //console.log("State {0}", this._view.state);
+        //let replyToId = this.replyTo
 
         let data = {
             "content": JSON.stringify(this._editor.GetDoc()),
             "replyTo": this.replyTo
-            //"contentHtml": (this.shadowRoot?.querySelector('.ProseMirror') as HTMLElement).innerHTML
         };
-
         this.dispatchEvent(new CustomEvent('publishActivity', { bubbles: true, detail: data }));
     }
 

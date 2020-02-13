@@ -75,7 +75,15 @@ export class ActivityItem extends HTMLElement {
     else { this.removeAttribute('replying'); }
   }
 
+  get showComments(): boolean {
+    return this.hasAttribute('show-comments');
+  }
+  set showComments(newValue) {
+    if (newValue) { this.setAttribute('show-comments',''); }
+    else { this.removeAttribute('show-comments'); }
+  }
 
+  restreamedActivity: ActivityItem | undefined;
   content: string = "";
   _reactions: Map<Reaction, number> = new Map<Reaction, number>();
   replies: ActivityItem[] = [];
@@ -90,7 +98,6 @@ export class ActivityItem extends HTMLElement {
     this._reactions[Reaction.Upset] = Math.floor(Math.random()*10);
     this._reactions[Reaction.Confused] = Math.floor(Math.random()*10);
     this._reactions[Reaction.Heart] = Math.floor(Math.random()*10);
-
   }
 
   _template(): TemplateResult {
@@ -141,7 +148,7 @@ export class ActivityItem extends HTMLElement {
         }
 
         button i.ms-Icon {
-          margin-right:0.6rem;
+          /* margin-right:0.6rem; */
         }
 
         .prosemirror-tag-node,
@@ -210,18 +217,18 @@ export class ActivityItem extends HTMLElement {
         <div class="card-header">
           <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
           <div class="author ml-1">${this.authorName}</div>
-
           <span @click=${this.shareHandler} class="share control badge badge-pill badge-light showOnHover">
             <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i>
           </span>
           <span class="bookmark control badge badge-pill badge-light">
             <i class="ms-Icon ms-Icon--AddBookmark" aria-hidden="true"></i>
           </span>
-
         </div>
         <div class="card-body">
           <div style="text-align:right;"><small class="timestamp text-muted" title="${this.timestamp.toLocaleString(DateTime.DATETIME_SHORT)}">${this.timestamp.toRelative()}</small></div>
           <div class="content">${unsafeHTML(this.content)}</div>
+          ${this.restreamedActivity}
+
         </div>
         <div class="card-footer">
           <div class="reactions" @click=${this.reactionHandler}>
@@ -252,14 +259,15 @@ export class ActivityItem extends HTMLElement {
           <button type="button" title="Comment on this activity" @click=${this.commentHandler} class="reply showOnHover btn btn-sm btn-outline-secondary">
             <i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Reply</span>
           </button>
-          <button type="button" title="View comments" @click=${this.commentHandler} class="comments btn btn-sm btn-outline-secondary">
+          <button type="button" title="View comments" @click=${this.toggleComments} class="comments btn btn-sm btn-outline-secondary">
             <i class="ms-Icon ms-Icon--Comment" aria-hidden="true"></i>
-            <span class="badge badge-light">9</span>
+            <span class="badge badge-light">${this.replies.length || ''}</span>
           </button>
         </div>
-
-        ${(this.isReplying ? html`<activity-input></activity-input>` : ``)}
+        ${(this.isReplying ? html`<activity-input reply-to=${this.activityId}></activity-input>` : ``)}
+      ${(this.showComments ? html`<activity-item></activity-item>` : ``)}
       </div>
+
     `;
   }
 
@@ -281,6 +289,11 @@ export class ActivityItem extends HTMLElement {
     console.log("Clicked to comment ", evt);
     this.isReplying = true;
     //this._update();
+  }
+
+  toggleComments = (evt:Event) => {
+    console.log("toggling the comments");
+    this.showComments = !this.showComments;
   }
 
   shareHandler(evt:Event) {
@@ -316,14 +329,11 @@ export class ActivityItem extends HTMLElement {
   }
 
   publishHandler = (evt:Event) => {
-    console.log("Received publish>");
-    evt.stopPropagation();
-    this.dispatchEvent(new CustomEvent("reply", {
+    console.log("Received publish at the ActivityItem, let propogate");
+    // evt.stopPropagation();
+    this.dispatchEvent(new CustomEvent("replyToActivity", {
       bubbles: true,
-      detail: {
-        parentId: this.id,
-        details: "message details"
-      }
+      detail: (evt as CustomEvent).detail
     }));
   }
 
@@ -343,7 +353,7 @@ export class ActivityItem extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['author-id', 'author-name', 'reaction', 'hide-controls', 'new', 'replying'];
+    return ['author-id', 'author-name', 'reaction', 'hide-controls', 'new', 'replying', 'show-comments'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -370,7 +380,9 @@ export class ActivityItem extends HTMLElement {
       case 'replying':
         this.isReplying = newValue != undefined;
         break;
-      case 'timestamp':
+      case 'show-comments':
+        this.showComments = newValue != undefined;
+        break;      case 'timestamp':
         this.timestamp = newValue;
         break;
       // case 'reaction':

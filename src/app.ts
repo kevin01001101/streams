@@ -17,23 +17,20 @@ interface ActivityResponse {
 }
 
 let _people: Map<string, Entity> = new Map<string, Entity>();
-
+let _activities: Map<string, ActivityApiResponse> = new Map<string, ActivityApiResponse>();
 
 const publishActivity = (evt:Event) => {
     console.log("New event {0}", evt);
     let publishEvent = evt as CustomEvent;
 
-    let restreamOf = ((evt.target as ActivityInput).embedded as ActivityItem).id;
-    let replyTo = null;
+    let restreamOf = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId;
+
     // publish the activity to the server
     let newActivity = {
         content: publishEvent.detail.content,
         restreamOf,
-        replyTo
+        replyTo: publishEvent.detail.replyTo
     };
-    //let restreamOf = ((evt.target as HTMLElement).querySelector('activity-item') as ActivityItem).id;
-
-
 
     fetch('https://localhost:44387/api/activities', {
         method: 'POST',
@@ -65,6 +62,10 @@ const publishActivity = (evt:Event) => {
                     return response.json();
                 })
                 .then((data: ActivityResponse) => {
+
+                    // if this is a REPLY-TO, then we don't add it to the activities list....
+                    //  it would either be added to the ActivityItem or to
+
                     console.log(JSON.stringify(data));
                     let editor = new Editor();
 
@@ -157,8 +158,10 @@ window.addEventListener('DOMContentLoaded', () => {
     let activityInputElem = document.querySelector('activity-input');
     activityInputElem?.addEventListener('publishActivity', publishActivity);
 
+
     let activityListElem = document.getElementById('activityList');
     activityListElem?.addEventListener('restreamActivity', restreamActivity);
+    activityListElem?.addEventListener('replyToActivity', publishActivity);
     activityListElem?.addEventListener('reactionChange', reactionChanged);
     activityListElem?.addEventListener('share', shareActivity);
 
@@ -175,26 +178,49 @@ window.addEventListener('DOMContentLoaded', () => {
         return response.json();
     })
     .then((data: ActivityResponse) => {
-        console.log(JSON.stringify(data));
 
         data.entities.forEach(p => {
             _people.set(p.id, p);
         });
 
+        // I think this needs to just be Editor.Deserialize() instead of instantiation of a new editor..
         let editor = new Editor();
+
+        data.activities.forEach(a => {
+            _activities.set(a.id, a);
+        });
+
 
         //  then display those items in the display area
         let activityListElem = document.getElementById('activityList');
-        activityListElem?.append(...data.activities.map(a => {
+        _activities.forEach(a => {
+            if (a.parentId) { return; }
             let item = new ActivityItem();
             item.activityId = a.id;
             item.authorId = a.authorId;
             item.authorName = _people.get(a.authorId)?.displayName ?? "";
             item.content = editor.Deserialize(JSON.parse(a.content));
-            item.timestamp = DateTime.fromISO(a.created as string);
+            item.timestamp = DateTime.fromISO(a.created);
             item.reactions = a.reactions;
-            return item;
-        }));
+            item.replies = a.replies.map(rId => { return new ActivityItem() });
+            //_activities.get(rId) });
+
+            if (a.restreamOf) {
+                let restreamData = _activities.get(a.restreamOf);
+                if (restreamData != undefined) {
+                    let restream = new ActivityItem();
+                    restream.activityId = restreamData.id;
+                    restream.authorId = restreamData.authorId;
+                    restream.authorName = restream.authorId ? _people.get(restream.authorId)?.displayName ?? "" : "";
+                    restream.content = editor.Deserialize(JSON.parse(restreamData.content));
+                    restream.timestamp = DateTime.fromISO(restreamData.created);
+                    restream.reactions = restreamData.reactions;
+                    restream.hideControls = true;
+                    item.restreamedActivity = restream;
+                }
+            }
+            activityListElem?.append(item);
+        });
         //activityListElem.activities = data.activities;
     })
     .catch((reason) => {

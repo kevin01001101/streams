@@ -17,17 +17,18 @@ class EmbeddableActivityItem {
   }
 
   update(view, lastState) {
-    let editorElem = view.dom.closest('.editor');
-    let activityElem = editorElem.querySelector('activity-item');
-    if (activityElem != undefined) { activityElem.remove(); }
-
-    if (view.props.embeddedElem) {
-      editorElem.appendChild(view.props.embeddedElem);
-      console.log("appended the activity item to the DOM");
+    if (view.props.embeddedElem == undefined) {
+      let editorElem = view.dom.closest('.editor');
+      let activityElem = editorElem.querySelector('activity-item');
+      if (activityElem) { activityElem.remove(); }
+    } else {
+      console.log("embedded element present");
+      let editorElem = view.dom.closest('.editor');
+      let activityElem = editorElem.querySelector('activity-item');
+      if (activityElem == undefined) {
+        editorElem.appendChild(view.props.embeddedElem);
+      }
     }
-    // console.log(view);
-    console.log("Update is called");
-    return;
   }
 
   // destroy() {
@@ -164,20 +165,24 @@ export class Editor {
     let g = (this._root.querySelector('[contenteditable]') as HTMLElement);
     console.log('g ', g);
     console.log(document.activeElement);
-    g.focus();
-    setTimeout(() => {
-      console.log("CB 1 ");
-      this._root?.focus();
-      setTimeout(() => {
-        console.log("CB 2 ");
-        document.body.focus();
-        setTimeout(() => {
-          console.log("CB 3 ", g);
-          g.focus();
-        }, 1)
-      }, 1)
-    }, 1)
-    console.log(document.activeElement);
+    console.log("view has focus? " + this._view.hasFocus());
+    this._view.focus();
+
+    // if we focus on an input (or hidden input) somewhere outside the custom element,
+    //  then refocus on the editor, it works in firefox
+    console.log("search input element? ", (document.querySelector('input') as HTMLInputElement));
+    (document.querySelector('input') as HTMLInputElement).focus();
+
+    console.log("view has focus? " + this._view.hasFocus());
+    document.getElementById('input.focusFix')?.focus();
+    //console.log("search input element? ", document.getElementById('searchInput'));
+
+    if (this._view.hasFocus()) {
+      console.log("already has focus...");
+    } else {
+      this._view.focus();
+      console.log("REFOCUSED.");
+    }
   }
 
 

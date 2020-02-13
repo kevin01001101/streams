@@ -9,8 +9,9 @@ export interface ActivityApiResponse {
     created: string;
     authorId: string;
     reactions: Map<Reaction,number>;
-    replies: Activity[];
-    parent?: number;
+    restreamOf: string;
+    replies: string[];
+    parentId: string;
 }
 
 export class Activity {
