@@ -4,7 +4,7 @@ import { Entity } from './models/entity.js';
 
 export interface DataStore {
 
-  people: Map<string, Entity>;
+  entities: Map<string, Entity>;
   activities: Map<string, Activity>;
 
 }

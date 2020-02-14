@@ -1,38 +1,49 @@
 import { DateTime } from 'luxon';
-import { Entity } from './entity';
 import { Reaction } from './enums.js';
+import { ActivityResponse } from '../interfaces';
 
 export class Activity {
 
-    id: string;
-    details: string;
-    created: DateTime;
-    authorId: string;
-    reactions: Reaction[];
-    replies: Activity[];
-    parent: Activity;
+    id: string = "";
+    content: string = "";
+    created: DateTime | undefined;
+    authorId: string = "";
+    myReaction: Reaction | undefined;
+    reactions: Map<Reaction,number> = new Map<Reaction,number>();
+    restream: string | undefined;
+    replies: string[] = [];
+    parentId: string | undefined;
 
-    constructor(dataObj)
+    constructor()
     {
+        // ({
+        //     id: this.id,
+        //     content: this.details,
+        //     created: this.created,
+        //     authorId: this.authorId,
+        //     reactions: this.reactions,
+        //     replies: this.replies,
+        //     parent: this.parent
+        // } = dataObj);
+    }
+
+    static create(dataObj: ActivityResponse) {
+        if (dataObj.authorId == undefined) { throw Error("activity must have a valid author"); }
+        let activity = new Activity();
         ({
-            id: this.id,
-            details: this.details,
-            created: this.created,
-            authorId: this.authorId,
-            reactions: this.reactions,
-            replies: this.replies,
-            parent: this.parent
+            id: activity.id,
+            authorId: activity.authorId,
+            reactions: activity.reactions,
+            restreamOf: activity.restream,
+            replies: activity.replies,
+            parentId: activity.parentId
         } = dataObj);
-
-        // explicit const {one,two} = dataObj
-        // Object.assign(this, dataObj);
-
-        // this.id = dataObj.id;
-        // this.details = dataObj.details;
-        // this.created = dataObj.created || DateTime.local();
-        // this.authorId = dataObj.authorId || -1;
-        // this.reactions = [];
-        // this.replies = [];
-        // this.parent = dataObj.parentId;
+        activity.content = JSON.parse(dataObj.content);
+        activity.created = DateTime.fromISO(dataObj.created);
+        return activity;
     }
 }
+
+    // explicit const {one,two} = dataObj
+    // -- or --
+    // Object.assign(this, dataObj);

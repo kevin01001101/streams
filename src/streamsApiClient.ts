@@ -1,5 +1,5 @@
 import { ApiClient } from './apiClient.js';
-import { Activity } from './models/activity.js';
+import { ActivityResponse, ActivitiesResponse } from './interfaces.js';
 
 export class StreamsApiClient extends ApiClient {
 
@@ -40,7 +40,7 @@ export class StreamsApiClient extends ApiClient {
     }
 
     const data = await result.json();
-    return new Activity(data);
+    return <ActivityResponse>data;
   };
 
 
@@ -51,8 +51,23 @@ export class StreamsApiClient extends ApiClient {
       throw new Error("streams api: unable to get activities");
     }
 
-    const data = <Activity[]>await result.json();
-    return data;
+    const data = await result.json();
+    return <ActivitiesResponse>data;
   }
 
+
+
+  updateReaction = async (activityId: string, reaction: string) => {
+
+    let result = await this.post('/api/reactions', {
+      activityId,
+      type: reaction
+    });
+
+    if (result.ok) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

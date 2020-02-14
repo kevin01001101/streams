@@ -30,6 +30,20 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('author-name', newValue); }
   }
 
+  get authorEmail() {
+    return this.getAttribute('author-email');
+  }
+  set authorEmail(newValue) {
+    if (newValue) { this.setAttribute('author-email', newValue); }
+  }
+
+  get authorAlias() {
+    return this.getAttribute('author-alias');
+  }
+  set authorAlias(newValue) {
+    if (newValue) { this.setAttribute('author-alias', newValue); }
+  }
+
   get timestamp() {
     let t = this.getAttribute('timestamp');
     return t ? DateTime.fromISO(t) : DateTime.local();
@@ -45,7 +59,7 @@ export class ActivityItem extends HTMLElement {
     if (newValue) { this.setAttribute('reaction', newValue); }
   }
 
-  set reactions(newReactions) {
+  set reactions(newReactions: Map<Reaction,number>) {
     if (newReactions != undefined) {
       this._reactions = Object.assign(this._reactions, newReactions);
     }
@@ -88,9 +102,22 @@ export class ActivityItem extends HTMLElement {
   _reactions: Map<Reaction, number> = new Map<Reaction, number>();
   replies: ActivityItem[] = [];
 
-  static Create(activityData) {
+  static create(activity, author) {
     let newItem =  new ActivityItem();
-    Object.assign(newItem, activityData);
+    ({
+      id: newItem.activityId,
+      content: newItem.content,
+      created: newItem.timestamp,
+      authorId: newItem.authorId,
+      myReaction: newItem.reaction,
+      reactions: newItem.reactions,
+      //parentId: newItem.parentId?
+    } = activity);
+    ({
+      id: newItem.authorId,
+      displayName: newItem.authorName,
+      email: newItem.authorEmail
+    } = author);
     return newItem;
   }
 
@@ -150,7 +177,7 @@ export class ActivityItem extends HTMLElement {
         }
 
         button i.ms-Icon {
-          /* margin-right:0.6rem; */
+          margin-right:0.6rem;
         }
 
         .prosemirror-tag-node,
@@ -209,9 +236,12 @@ export class ActivityItem extends HTMLElement {
           color:black;
         }
 
-
         activity-input {
           margin:0.4rem;
+        }
+
+        .card-footer ~ activity-item {
+            border-left: solid thick #f7f7f7;
         }
 
         </style>
@@ -267,7 +297,7 @@ export class ActivityItem extends HTMLElement {
           </button>
         </div>
         ${(this.isReplying ? html`<activity-input reply-to=${this.activityId}></activity-input>` : ``)}
-      ${(this.showComments ? html`<activity-item></activity-item>` : ``)}
+      ${(this.showComments ? this.replies : ``)}
       </div>
 
     `;
@@ -305,29 +335,31 @@ export class ActivityItem extends HTMLElement {
 
   reactionHandler = (evt:Event) => {
     console.log(evt.target);
-    let buttonElem = (<HTMLElement>evt.target).closest('button');
-    if (buttonElem == null) return;
+    let currentSelection = (<HTMLElement>evt.target).closest('button');
+    let selectedReactionText = currentSelection?.getAttribute('data-reaction');
+    if (!selectedReactionText) { return; }
 
-    console.log("an emoji was selected");
-    let previousSelection = this.shadowRoot?.querySelector('.reactions button.active');
+    let newReaction = Reaction[selectedReactionText];
+    let previousReaction = this.reaction;
 
-    // Functions like radio buttons, but (unlike radio buttns) allows one to unselect the only selected item
-    if (previousSelection == buttonElem) {
-      buttonElem.classList.remove('active');
-    } else {
-      previousSelection?.classList.remove('active');
-      buttonElem.classList.add('active');
-    }
-
-    let selectedReactionBtn = this.shadowRoot?.querySelector('.reactions button.active');
-    let currentReaction = selectedReactionBtn?.getAttribute('data-reaction');
     this.dispatchEvent(new CustomEvent('reactionChange', {
       bubbles: true,
       detail: {
-        currentReaction,
-        previousReaction: previousSelection?.getAttribute('data-reaction')
+        newReaction,
+        previousReaction
       }
     }));
+
+    this.reaction = newReaction;
+    if (previousReaction) {
+      let prevCount = this._reactions.get(Reaction[previousReaction]) ?? 0;
+      this._reactions.set(Reaction[previousReaction], --prevCount);
+    }
+    if (this.reaction) {
+      let curCount = this._reactions.get(Reaction[this.reaction]) ?? 0;
+      this._reactions.set(Reaction[this.reaction], ++curCount);
+    }
+    this._update();
   }
 
   publishHandler = (evt:Event) => {
@@ -368,6 +400,12 @@ export class ActivityItem extends HTMLElement {
         this.authorId = newValue;
         break;
       case 'author-name':
+        this.authorName = newValue;
+        break;
+      case 'author-email':
+        this.authorName = newValue;
+        break;
+      case 'author-alias':
         this.authorName = newValue;
         break;
       case 'reaction':

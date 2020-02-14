@@ -1,31 +1,29 @@
-interface ReactionResponse {
-  type:string;
-}
+import { Reaction } from './models/enums.js';
 
-interface ActivityRequest {
+export interface ActivityRequest {
   content: string,
   restreamOf?: string,
   replyTo?: string
 };
 
-interface ActivityResponse {
+export interface ActivityResponse {
   id: string; // guid
   content: string;
   created: string;
   authorId: string;
-  reactions: Map<ReactionResponse,number>;
+  reactions: Map<Reaction,number>;
   restreamOf: string;
   replies: string[];
   parentId: string;
 }
 
-interface EntityResponse {
+export interface EntityResponse {
   id: string;
   displayName: string;
   email: string;
 }
 
-interface ActivitiesResponse {
+export interface ActivitiesResponse {
     activities: ActivityResponse[];
     entities: EntityResponse[];
 }

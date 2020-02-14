@@ -91,7 +91,7 @@ export class Editor {
     this._state = this.GetNewEditorState();
   }
 
-  Deserialize = (nodeObject) => {
+  deserialize = (nodeObject) => {
     const node = this._schema.nodeFromJSON(nodeObject);
     let target = document.createElement('div');
     this._serializer.serializeFragment(node, {}, target);

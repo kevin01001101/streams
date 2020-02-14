@@ -1,5 +1,3 @@
-import { Activity } from './models/activity.js';
-
 export abstract class ApiClient {
   _apiHostname: string | undefined;
 
@@ -70,26 +68,26 @@ export abstract class ApiClient {
 
   }
 
-  getActivity = async (activityId: string) => {
+  // getActivity = async (activityId: string) => {
 
-    let result = await this.get('/api/activities/' + activityId);
+  //   let result = await this.get('/api/activities/' + activityId);
 
-    if (result.status != 200) {
-      throw new Error("streams api: unable to get activity");
-    }
+  //   if (result.status != 200) {
+  //     throw new Error("streams api: unable to get activity");
+  //   }
 
-    const data = await result.json();
-    return new Activity(data);
-  };
+  //   const data = await result.json();
+  //   return new Activity(data);
+  // };
 
-  getActivities = async (options, ) => {
-    let result = await this.get('/api/activities/');
+  // getActivities = async (options, ) => {
+  //   let result = await this.get('/api/activities/');
 
-    if (result.status != 200) {
-      throw new Error("streams api: unable to get activities");
-    }
+  //   if (result.status != 200) {
+  //     throw new Error("streams api: unable to get activities");
+  //   }
 
-    const data = <Activity[]>await result.json();
-    return data;
-  }
+  //   const data = <Activity[]>await result.json();
+  //   return data;
+  // }
 }

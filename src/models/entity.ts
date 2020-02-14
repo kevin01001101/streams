@@ -1,18 +1,25 @@
-import { html } from 'lit-html'
+import { EntityResponse } from '../interfaces.js';
 
-interface EntityResponse {
-    id: string;
-    displayName: string;
-}
 
 export class Entity {
-    id: string;
-    displayName: string;
+    id: string = "";
+    displayName: string | undefined;
+    email: string | undefined;
 
-    constructor(data: EntityResponse = { id: "", displayName: "" }) {
-        this.id = data.id;
-        this.displayName = data.displayName;
+    constructor() {
+
     }
 
+    static create(entityData: EntityResponse) {
+        let entity = new Entity();
+        ({
+            id: entity.id,
+            displayName: entity.displayName,
+            email: entity.email
+        } = entityData);
+        Object.assign(entity, entityData);
+
+        return entity;
+    }
 }
 

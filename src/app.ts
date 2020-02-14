@@ -10,7 +10,7 @@ import { Activity } from './models/activity.js';
 import { Reaction } from './models/enums.js';
 
 let StreamsData = new StreamsDataStore();
-let StreamsClient = new StreamsApiClient("https://localhost:44387/");
+let StreamsClient = new StreamsApiClient("https://localhost:44387");
 
 const publishActivity = async (evt:Event) => {
     console.log("New event {0}", evt);
@@ -24,67 +24,29 @@ const publishActivity = async (evt:Event) => {
 
     const newActivityId = locationUri.substring(locationUri.lastIndexOf('/')+1);
     const newActivity = await StreamsClient.getActivity(newActivityId);
+    StreamsData.addActivities([Activity.create(newActivity)]);
 
     let activityListElem = document.getElementById('activityList');
-    activityListElem?.prepend(ActivityItem.Create(newActivity));
-
+    let activityItem = ActivityItem.create(StreamsData.activities.get(newActivity.id), StreamsData.entities.get(newActivity.authorId));
+    activityListElem?.prepend(activityItem);
 }
 
-//                 .then((data: ActivityResponse) => {
 
-//                     // if this is a REPLY-TO, then we don't add it to the activities list....
-//                     //  it would either be added to the ActivityItem or to
-
-//                     console.log(JSON.stringify(data));
-//                     let editor = new Editor();
-
-//                     let activityListElem = document.getElementById('activityList');
-//                     activityListElem?.prepend(...data.activities.map(a => {
-//                         let item = new ActivityItem();
-//                         item.authorId = a.authorId;
-//                         item.authorName = _people.get(a.authorId)?.displayName ?? "";
-//                         item.content = editor.Deserialize(JSON.parse(a.content));
-//                         item.timestamp = DateTime.fromISO(a.created as string);
-//                         item.reactions = a.reactions;
-//                         return item;
-//                     }));
-//                 })
-//             }
-//         }
-//     })
-// }
-
-const reactionChanged = (evt:Event) =>{
+const updateReaction = async (evt:Event) =>{
     console.log("Reaction has been updated...");
+
     // should pass the old value and the new value
     let newReaction = (evt as CustomEvent).detail.currentReaction;
     let prevReaction = (evt as CustomEvent).detail.previousReaction;
     let activityElem = <ActivityItem>evt.target;
 
-    if (newReaction != undefined) {
+    if (activityElem.activityId == null) {
+        return console.warn("failed to retrieve ActivityId from activity-item element.");
+    }
 
-        fetch('https://localhost:44387/api/reactions', {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Access-Control-Expose-Headers': 'Location'
-            },
-            body: JSON.stringify({
-                activityId: (evt.target as ActivityItem).activityId,
-                type: newReaction
-            })
-        })
-        .then((response) => {
-            console.log("POST REACTION:");
-            console.log(response.ok);
-            console.log(response.status);
-        })
-        .catch((reason) => {
-            // undo the reaction change, since it didn't stick.
-            activityElem.undoReactionChange(reason);
-        });
+    let success = await StreamsClient.updateReaction(activityElem.activityId, newReaction);
+    if (!success) {
+        activityElem.undoReactionChange("API call failed to update reaction");
     }
 }
 
@@ -119,46 +81,30 @@ const shareActivity = (evt: Event) => {
 
 const updateActivityList = () => {
 
+    let editor = new Editor();
     let activityListElem = document.getElementById('activityList');
     StreamsData.activities.forEach(a => {
-        if (a.parent == undefined) return;
-        let activityItem =ActivityItem.Create(a);
+        if (a.parentId != undefined) return;
+        let activityItem = ActivityItem.create(a, StreamsData.entities.get(a.authorId));
+        activityItem.content = editor.deserialize(activityItem.content);
+        if (a.restream) {
+            let restreamedActivity = StreamsData.activities.get(a.restream)!;
+            if (!restreamedActivity) { throw Error("activity not found in datastore: " + a.restream); }
+            activityItem.restreamedActivity = ActivityItem.create(restreamedActivity, StreamsData.entities.get(restreamedActivity?.authorId));
+            activityItem.restreamedActivity.content = editor.deserialize(activityItem.restreamedActivity.content);
+            activityItem.restreamedActivity.hideControls = true;
+        }
+        activityItem.replies = a.replies.map(r => {
+            let replyActivity = StreamsData.activities.get(r);
+            if (!replyActivity) { throw Error("activity not found in datastore: " + r); }
+            let aItem = ActivityItem.create(replyActivity, StreamsData.entities.get(replyActivity?.authorId));
+            aItem.content = editor.deserialize(aItem.content);
+            return aItem;
+        });
         activityListElem?.append(activityItem);
     });
-
-        //         //  then display those items in the display area
-        // //let activityListElem = document.getElementById('activityList');
-        // activities.forEach(a => {
-        //     if (a.parentId) { return; }
-        //     let item = new ActivityItem();
-        //     item.activityId = a.id;
-        //     item.authorId = a.authorId;
-        //     item.authorName = _people.get(a.authorId)?.displayName ?? "";
-        //     item.content = editor.Deserialize(JSON.parse(a.content));
-        //     item.timestamp = DateTime.fromISO(a.created);
-        //     item.reactions = a.reactions;
-        //     item.replies = a.replies.map(rId => { return new ActivityItem() });
-        //     //_activities.get(rId) });
-
-        //     if (a.restreamOf) {
-        //         let restreamData = _activities.get(a.restreamOf);
-        //         if (restreamData != undefined) {
-        //             let restream = new ActivityItem();
-        //             restream.activityId = restreamData.id;
-        //             restream.authorId = restreamData.authorId;
-        //             restream.authorName = restream.authorId ? _people.get(restream.authorId)?.displayName ?? "" : "";
-        //             restream.content = editor.Deserialize(JSON.parse(restreamData.content));
-        //             restream.timestamp = DateTime.fromISO(restreamData.created);
-        //             restream.reactions = restreamData.reactions;
-        //             restream.hideControls = true;
-        //             item.restreamedActivity = restream;
-        //         }
-        //     }
-
-        // });
-        //activityListElem.activities = data.activities;
-    // });
 }
+
 
 window.addEventListener('DOMContentLoaded', async () => {
     console.log("document loaded.");
@@ -174,12 +120,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     let activityListElem = document.getElementById('activityList');
     activityListElem?.addEventListener('restreamActivity', restreamActivity);
     activityListElem?.addEventListener('replyToActivity', publishActivity);
-    activityListElem?.addEventListener('reactionChange', reactionChanged);
+    activityListElem?.addEventListener('reactionChange', updateReaction);
     activityListElem?.addEventListener('share', shareActivity);
 
-    StreamsData.activities = (await StreamsClient.getActivities({})).reduce((map, activity) => {
-        return map.set(activity.id, activity);
-    }, new Map<string, Activity>());
+
+    const { activities, entities } = await StreamsClient.getActivities({});
+    StreamsData.addActivities(activities.map(a => Activity.create(a)));
+    StreamsData.addEntities(entities.map(e => Entity.create(e)));
+
 
     // I think this needs to just be Editor.Deserialize() instead of instantiation of a new editor..
     let editor = new Editor();
