@@ -57,6 +57,7 @@ export class ActivityItem extends HTMLElement {
   }
   set reaction(newValue) {
     if (newValue) { this.setAttribute('reaction', newValue); }
+    else { this.removeAttribute('reaction'); }
   }
 
   set reactions(newReactions: Map<Reaction,number>) {
@@ -176,8 +177,8 @@ export class ActivityItem extends HTMLElement {
           justify-content:space-around;
         }
 
-        button i.ms-Icon {
-          margin-right:0.6rem;
+        button i.ms-Icon ~span {
+          margin-left:0.6rem;
         }
 
         .prosemirror-tag-node,
@@ -266,22 +267,22 @@ export class ActivityItem extends HTMLElement {
           <div class="reactions" @click=${this.reactionHandler}>
             <button type="button" data-reaction="${Reaction.Happy}" class="${classMap({"active":this.reaction == Reaction.Happy})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😀</span>
-              <span class="badge badge-light">${this._reactions[Reaction.Happy] > 0 ? this._reactions[Reaction.Happy] : ''}</span>
+              <span class="badge badge-light">${this._reactions.get(Reaction.Happy) ? this._reactions.get(Reaction.Happy) : ''}</span>
               <span class="sr-only">happy response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Upset}" class="${classMap({"active":this.reaction == Reaction.Upset})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😿</span>
-              <span class="badge badge-light">${this._reactions[Reaction.Upset] > 0 ? this._reactions[Reaction.Upset] : ''}</span>
+              <span class="badge badge-light">${this._reactions.get(Reaction.Upset) ? this._reactions.get(Reaction.Upset) : ''}</span>
               <span class="sr-only">upset response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Confused}" class="${classMap({"active":this.reaction == Reaction.Confused})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😵</span>
-              <span class="badge badge-light">${this._reactions[Reaction.Confused] > 0 ? this._reactions[Reaction.Confused] : ''}</span>
+              <span class="badge badge-light">${this._reactions.get(Reaction.Confused) ? this._reactions.get(Reaction.Confused) : ''}</span>
               <span class="sr-only">confused response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Heart}" class="${classMap({"active":this.reaction == Reaction.Heart})} btn btn-sm btn-outline-secondary">
               <span class="emoji">❤</span>
-              <span class="badge badge-light">${this._reactions[Reaction.Heart] > 0 ? this._reactions[Reaction.Heart] : ''}</span>
+              <span class="badge badge-light">${this._reactions.get(Reaction.Heart) ? this._reactions.get(Reaction.Heart) : ''}</span>
               <span class="sr-only">heart response</span>
             </button>
           </div>
@@ -336,11 +337,13 @@ export class ActivityItem extends HTMLElement {
   reactionHandler = (evt:Event) => {
     console.log(evt.target);
     let currentSelection = (<HTMLElement>evt.target).closest('button');
-    let selectedReactionText = currentSelection?.getAttribute('data-reaction');
-    if (!selectedReactionText) { return; }
-
-    let newReaction = Reaction[selectedReactionText];
+    if (!currentSelection) { return; }
+    
+    let newReaction = currentSelection.getAttribute('data-reaction');
     let previousReaction = this.reaction;
+    if (newReaction == previousReaction) {
+      newReaction = null;
+    }
 
     this.dispatchEvent(new CustomEvent('reactionChange', {
       bubbles: true,

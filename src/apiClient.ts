@@ -15,7 +15,6 @@ export abstract class ApiClient {
   }
 
   protected post = async (endpoint:string, data) => {
-
     const response = await fetch(this.prependHostname(endpoint), {
       method: 'POST',
       mode: 'cors',
@@ -39,7 +38,18 @@ export abstract class ApiClient {
         'Content-Type': 'application/json'
       },
     });
+    return response;
+  };
 
+  protected delete = async (endpoint:string) => {
+    const response = await fetch(this.prependHostname(endpoint), {
+      method: 'DELETE',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
     return response;
   };
 

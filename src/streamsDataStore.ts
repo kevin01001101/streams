@@ -1,4 +1,4 @@
-import { DataStore } from './dataStore.js';
+import { DataStore } from './datastore.js';
 import { Entity } from './models/entity.js';
 import { Activity } from './models/activity.js';
 

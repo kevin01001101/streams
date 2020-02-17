@@ -36,7 +36,7 @@ const updateReaction = async (evt:Event) =>{
     console.log("Reaction has been updated...");
 
     // should pass the old value and the new value
-    let newReaction = (evt as CustomEvent).detail.currentReaction;
+    let newReaction = (evt as CustomEvent).detail.newReaction;
     let prevReaction = (evt as CustomEvent).detail.previousReaction;
     let activityElem = <ActivityItem>evt.target;
 

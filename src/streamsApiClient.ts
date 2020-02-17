@@ -58,11 +58,16 @@ export class StreamsApiClient extends ApiClient {
 
 
   updateReaction = async (activityId: string, reaction: string) => {
-
-    let result = await this.post('/api/reactions', {
-      activityId,
-      type: reaction
-    });
+    
+    let result;
+    if (reaction) {
+      result = await this.post('/api/reactions', {
+        activityId,
+        type: reaction
+      });
+    } else {
+      result  = await this.delete('/api/reactions/' + activityId);
+    }
 
     if (result.ok) {
       return true;
