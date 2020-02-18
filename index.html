@@ -28,52 +28,73 @@
             width:100%;
             margin:0.6rem;
         }
+
         .controls {
             margin:0.4rem;
         }
 
-        .scrollable {
-            height:calc(100vh - 17rem);
-            overflow-y:auto;
+        #grid {
+            display:grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-gap: 1rem;
+            grid-template-rows: 100vh;
         }
 
+        .leftNav, .infoCol {
+            margin:0.4rem;
+        }
+
+        .leftNav {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        .main {
+            grid-column: 2;
+            grid-row: 1;
+            display:flex;
+            flex-direction:column;
+        }
+        .infoCol {
+            grid-column: 3;
+            grid-row: 1;
+        }
+        #activityList {
+            overflow-y: auto;
+        }
     </style>
     <script type="text/javascript">
     </script>
 </head>
 
 <body>
-    <div class="container-fluid">
-
-        <div class="row">
-            <div class="col-3">
-                <heading>
-                    <h1>STREAMS</h1>
-                </heading>
-                <div>
-                    <a href="/somewhere">About</a>
-                    <h3>@ - Connect</h3>
-                    <h3># - Discover</h3>
-                    <h3>P - Me</h3>
-                    <h3>S - Search</h3>
-                    <h3>L - Lists</h3>
-                    <h3>G - Settings</h3>
-                </div>
+    <div id="grid">
+        <div class="leftNav">
+            <heading>
+                <h1>STREAMS</h1>
+            </heading>
+            <div>
+                <a href="/somewhere">About</a>
+                <h3>@ - Connect</h3>
+                <h3># - Discover</h3>
+                <h3>P - Me</h3>
+                <h3>S - Search</h3>
+                <h3>L - Lists</h3>
+                <h3>G - Settings</h3>
             </div>
-
-            <div class="col">
-                <activity-input></activity-input>
-                <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-                <div id="activityList" class="scrollable"></div>
-            </div>
-
-            <div class="col-3">
-                <form>
-                    <input class="form-control" type="text" id="searchInput" />
-                </form>
-            </div>
-
         </div>
+
+        <div class="main">
+            <activity-input></activity-input>
+            <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
+            <div id="activityList" class="scrollable"></div>
+        </div>
+
+        <div class="infoCol">
+            <form>
+                <input class="form-control" type="text" id="searchInput" />
+            </form>
+        </div>
+
     </div>
 
 </body>

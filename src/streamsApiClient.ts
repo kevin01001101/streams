@@ -80,4 +80,12 @@ export class StreamsApiClient extends ApiClient {
       return false;
     }
   }
+
+  getEntity = async (entityId) => {
+
+    const result = await this.get('/api/entities/' + entityId);
+    const data = await result.json();
+    return data;
+  };
+
 }

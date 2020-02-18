@@ -13,21 +13,35 @@ let StreamsData = new StreamsDataStore();
 let StreamsClient = new StreamsApiClient("https://localhost:44387");
 
 const publishActivity = async (evt:Event) => {
-    console.log("New event {0}", evt);
+//    console.log("New event {0}", evt);
     let publishEvent = evt as CustomEvent;
+
     let restreamOf = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
 
     // may throw errors
     const locationUri = await StreamsClient.saveActivity(publishEvent.detail.content, restreamOf, publishEvent.detail.replyTo);
 
-    (evt.target as ActivityInput).reset();
+    (publishEvent.detail.inputElem as ActivityInput).reset();
 
     const newActivityId = locationUri.substring(locationUri.lastIndexOf('/')+1);
-    const newActivity = await StreamsClient.getActivity(newActivityId);
-    StreamsData.addActivities([Activity.create(newActivity)]);
+    const newActivityResp = await StreamsClient.getActivity(newActivityId);
+    let newActivity = Activity.create(newActivityResp)
+    StreamsData.addActivities([newActivity]);
+
+    // we have to ensure that we have the record for the author....
+    if (!StreamsData.entities.has(newActivity.authorId)) {
+        const newEntityResp = await StreamsClient.getEntity(newActivity.authorId);
+        StreamsData.addEntities([Entity.create(newEntityResp)]);
+    }
 
     let activityListElem = document.getElementById('activityList');
     let activityItem = ActivityItem.create(StreamsData.activities.get(newActivity.id), StreamsData.entities.get(newActivity.authorId));
+
+    let editor = new Editor();
+    activityItem.content = editor.deserialize(activityItem.content);
+
+    // what if we're adding a new comment?  we need to set it up here...
+
     activityListElem?.prepend(activityItem);
 }
 
@@ -51,14 +65,16 @@ const updateReaction = async (evt:Event) =>{
 }
 
 const restreamActivity = (evt:Event) => {
-    console.log("set the activity input box with the activity item ", (evt as CustomEvent).detail);
+    const restreamEvent = evt as CustomEvent;
+    console.log("set the activity input box with the activity item ", restreamEvent.detail);
+
+    // grab the first activity input element on the page (should update to an ID?)
     let activityInput = <ActivityInput>document.getElementsByTagName('activity-input')[0];
 
     // idea:
     //  get the activity id, get the activity data, build new activityitem from that
-
-    // really better off to create a new Activity-Input element with values than cloning an existing node
-    let sourceActivity = evt.target as ActivityItem;
+    // better to create a new Activity-Input element with values than cloning an existing node ??
+    let sourceActivity = restreamEvent.detail.activityElem as ActivityItem;
     let clonedActivity = <ActivityItem>sourceActivity.cloneNode(false);
     clonedActivity.isReplying = false;
     clonedActivity.content = sourceActivity.content;
@@ -119,7 +135,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     let activityListElem = document.getElementById('activityList');
     activityListElem?.addEventListener('restreamActivity', restreamActivity);
-    activityListElem?.addEventListener('replyToActivity', publishActivity);
+    activityListElem?.addEventListener('publishActivity', publishActivity);
     activityListElem?.addEventListener('reactionChange', updateReaction);
     activityListElem?.addEventListener('share', shareActivity);
 

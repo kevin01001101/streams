@@ -142,9 +142,13 @@ export class ActivityItem extends HTMLElement {
 
         .activity.card {
           margin:0.5rem;
+          margin-bottom:1rem;
         }
         .activity.card.new {
           filter: drop-shadow(4px 4px 8px blue);
+        }
+        .activity.card.replying {
+          margin-bottom:2rem;
         }
 
         .card-header {
@@ -310,6 +314,7 @@ export class ActivityItem extends HTMLElement {
 
     this.dispatchEvent(new CustomEvent('restreamActivity', {
       bubbles: true,
+      composed: true,
       detail: {
         activityElem: this
       }
@@ -368,7 +373,7 @@ export class ActivityItem extends HTMLElement {
   publishHandler = (evt:Event) => {
     console.log("Received publish at the ActivityItem, let propogate");
     // evt.stopPropagation();
-    this.dispatchEvent(new CustomEvent("replyToActivity", {
+    this.dispatchEvent(new CustomEvent("publishActivity", {
       bubbles: true,
       detail: (evt as CustomEvent).detail
     }));

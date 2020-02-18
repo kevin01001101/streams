@@ -37,7 +37,7 @@ export class Activity {
             replies: activity.replies,
             parentId: activity.parentId
         } = dataObj);
-        dataObj.reactions.forEach(r => {
+        dataObj.reactions?.forEach(r => {
             activity.reactions.set(r.type, r.count);
         });
         activity.content = JSON.parse(dataObj.content);

@@ -137,6 +137,7 @@ export class ActivityInput extends HTMLElement {
 
         let data = {
             "content": JSON.stringify(this._editor.GetDoc()),
+            "inputElem": this,
             "replyTo": this.replyTo
         };
         this.dispatchEvent(new CustomEvent('publishActivity', { bubbles: true, detail: data }));
