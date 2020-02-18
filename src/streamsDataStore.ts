@@ -1,6 +1,7 @@
-import { DataStore } from './datastore.js';
+import { DataStore } from './dataStore.js';
 import { Entity } from './models/entity.js';
 import { Activity } from './models/activity.js';
+import { Reaction } from './models/enums.js';
 
 export class StreamsDataStore implements DataStore {
 
@@ -23,5 +24,9 @@ export class StreamsDataStore implements DataStore {
     });
   }
 
-
+  addReaction = (activityId: string, reaction: Reaction) => {
+    let activity = this.activities.get(activityId);
+    if (activity == undefined) { return; }
+    activity.myReaction = reaction;
+  }
 }

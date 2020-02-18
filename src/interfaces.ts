@@ -11,7 +11,7 @@ export interface ActivityResponse {
   content: string;
   created: string;
   authorId: string;
-  reactions: Map<Reaction,number>;
+  reactions: ReactionResponse[];
   restreamOf: string;
   replies: string[];
   parentId: string;
@@ -23,7 +23,12 @@ export interface EntityResponse {
   email: string;
 }
 
+export interface ReactionResponse {
+  type: Reaction;
+  count: number;
+}
+
 export interface ActivitiesResponse {
-    activities: ActivityResponse[];
-    entities: EntityResponse[];
+  activities: ActivityResponse[];
+  entities: EntityResponse[];
 }

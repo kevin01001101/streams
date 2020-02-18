@@ -1,6 +1,6 @@
 
 export enum Reaction {
-    None = "None",
+    None = "none",
     Happy = "Happy",
     Upset = "Upset",
     Confused = "Confused",

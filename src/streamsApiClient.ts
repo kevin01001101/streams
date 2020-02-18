@@ -33,7 +33,7 @@ export class StreamsApiClient extends ApiClient {
 
   getActivity = async (activityId: string) => {
 
-    let result = await this.get('/api/activities/' + activityId);
+    const result = await this.get('/api/activities/' + activityId);
 
     if (result.status != 200) {
       throw new Error("streams api: unable to get activity");
@@ -44,8 +44,8 @@ export class StreamsApiClient extends ApiClient {
   };
 
 
-  getActivities = async (options, ) => {
-    let result = await this.get('/api/activities/');
+  getActivities = async (options) => {
+    const result = await this.get('/api/activities/');
 
     if (result.status != 200) {
       throw new Error("streams api: unable to get activities");
@@ -56,9 +56,14 @@ export class StreamsApiClient extends ApiClient {
   }
 
 
+  getReactions = async () => {
+    const result = await this.get('/api/reactions');
+    const data = await result.json();
+    return data;
+  };
 
   updateReaction = async (activityId: string, reaction: string) => {
-    
+
     let result;
     if (reaction) {
       result = await this.post('/api/reactions', {

@@ -62,7 +62,7 @@ export class ActivityItem extends HTMLElement {
 
   set reactions(newReactions: Map<Reaction,number>) {
     if (newReactions != undefined) {
-      this._reactions = Object.assign(this._reactions, newReactions);
+      this._reactions = new Map(newReactions);
     }
   }
 
@@ -268,22 +268,22 @@ export class ActivityItem extends HTMLElement {
             <button type="button" data-reaction="${Reaction.Happy}" class="${classMap({"active":this.reaction == Reaction.Happy})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😀</span>
               <span class="badge badge-light">${this._reactions.get(Reaction.Happy) ? this._reactions.get(Reaction.Happy) : ''}</span>
-              <span class="sr-only">happy response</span>
+              <span class="sr-only">Happy response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Upset}" class="${classMap({"active":this.reaction == Reaction.Upset})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😿</span>
               <span class="badge badge-light">${this._reactions.get(Reaction.Upset) ? this._reactions.get(Reaction.Upset) : ''}</span>
-              <span class="sr-only">upset response</span>
+              <span class="sr-only">Upset response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Confused}" class="${classMap({"active":this.reaction == Reaction.Confused})} btn btn-sm btn-outline-secondary">
               <span class="emoji">😵</span>
               <span class="badge badge-light">${this._reactions.get(Reaction.Confused) ? this._reactions.get(Reaction.Confused) : ''}</span>
-              <span class="sr-only">confused response</span>
+              <span class="sr-only">Confused response</span>
             </button>
             <button type="button" data-reaction="${Reaction.Heart}" class="${classMap({"active":this.reaction == Reaction.Heart})} btn btn-sm btn-outline-secondary">
               <span class="emoji">❤</span>
               <span class="badge badge-light">${this._reactions.get(Reaction.Heart) ? this._reactions.get(Reaction.Heart) : ''}</span>
-              <span class="sr-only">heart response</span>
+              <span class="sr-only">Heart response</span>
             </button>
           </div>
           <button type="button" title="Restream this activity" @click=${this.restreamHandler} class="restream showOnHover btn btn-sm btn-outline-secondary">
@@ -338,7 +338,7 @@ export class ActivityItem extends HTMLElement {
     console.log(evt.target);
     let currentSelection = (<HTMLElement>evt.target).closest('button');
     if (!currentSelection) { return; }
-    
+
     let newReaction = currentSelection.getAttribute('data-reaction');
     let previousReaction = this.reaction;
     if (newReaction == previousReaction) {

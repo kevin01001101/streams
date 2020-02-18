@@ -33,11 +33,13 @@ export class Activity {
         ({
             id: activity.id,
             authorId: activity.authorId,
-            reactions: activity.reactions,
             restreamOf: activity.restream,
             replies: activity.replies,
             parentId: activity.parentId
         } = dataObj);
+        dataObj.reactions.forEach(r => {
+            activity.reactions.set(r.type, r.count);
+        });
         activity.content = JSON.parse(dataObj.content);
         activity.created = DateTime.fromISO(dataObj.created);
         return activity;

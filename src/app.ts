@@ -128,9 +128,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     StreamsData.addActivities(activities.map(a => Activity.create(a)));
     StreamsData.addEntities(entities.map(e => Entity.create(e)));
 
-
-    // I think this needs to just be Editor.Deserialize() instead of instantiation of a new editor..
-    let editor = new Editor();
+    const reactions = await StreamsClient.getReactions();
+    reactions.forEach(r => {
+        StreamsData.addReaction(r.activityId, r.type);
+    });
 
     updateActivityList();
 
