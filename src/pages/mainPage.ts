@@ -1,0 +1,275 @@
+import { DataStore } from "../dataStore";
+import { ApiClient } from "../apiClient";
+import { Activity } from "../models/activity";
+import { ActivityInput } from "../components/activityInput";
+import { ActivityItem } from "../components/activityItem";
+import { Entity } from "../models/entity";
+import { Editor } from "../components/editor";
+
+import { html, render, TemplateResult } from 'lit-html';
+import { repeat } from 'lit-html/directives/repeat';
+
+export class MainPage {
+  store: DataStore;
+  client: ApiClient;
+
+  private static _instance: MainPage;
+
+  _template(): TemplateResult {
+    return html`
+      <div id="grid" @click=${this.routeClick}>
+        <div class="leftNav">
+            <heading>
+                <h1>STREAMS</h1>
+            </heading>
+            <div>
+                <a href="/somewhere">About</a>
+                <h3>@ - Connect</h3>
+                <h3># - Discover</h3>
+                <h3>P - Me</h3>
+                <h3>S - Search</h3>
+                <h3>L - Lists</h3>
+                <h3>G - Settings</h3>
+            </div>
+        </div>
+
+        <div class="main">
+            <activity-input @publishActivity=${this.publishActivity}></activity-input>
+            <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
+            <activity-list class="scrollable" .activities=${this.getActivities()}></activity-list>
+        </div>
+
+        <div class="infoCol">
+            <form>
+                <input class="form-control" type="text" id="searchInput" />
+            </form>
+        </div>
+      </div>`
+  };
+
+  private _root: HTMLElement;
+  _activityList: Activity[] = [];
+
+  private constructor(rootElem, store, client) {
+    this.store = store;
+    this.client = client;
+    this._root = rootElem;
+  }
+
+  public static async create(container: HTMLElement, store: DataStore, client: ApiClient) {
+    if (this._instance == undefined) {
+      this._instance = new this(container, store, client);
+    }
+
+    const { activities, entities } = await this._instance.client.getActivities({});
+    this._instance.store.addActivities(activities.map(a => Activity.create(a)));
+    this._instance.store.addEntities(entities.map(e => Entity.create(e)));
+
+    const reactions = await this._instance.client.getReactions();
+    reactions.forEach(r => {
+      this._instance.store.addReaction(r.activityId, r.type);
+    });
+
+    this._instance._update();
+    //await this._instance.setupEventHandlers();
+    //this._instance.updateActivityList();
+
+    return this._instance;
+  }
+
+  _update = () => {
+    render(this._template(), this._root);
+  }
+
+  private getActivities() {
+    let activities = this.store._activities;
+    let editor = new Editor();
+
+    return [...activities.values()].map(a => {
+      a.author = this.store._entities.get(a.authorId);
+      a.content = editor.deserialize(a.content);
+      return a;
+    });
+
+    //return activities;
+  }
+
+  private setupEventHandlers = async () => {
+
+    //this._root.querySelector('activity-input');
+
+    // let activityInputElem = this._root.querySelector('activity-input');
+    // activityInputElem?.addEventListener('publishActivity', this.publishActivity);
+
+    // let activityListElem = document.getElementById('activityList');
+    // activityListElem?.addEventListener('restreamActivity', this.restreamActivity);
+    // activityListElem?.addEventListener('publishActivity', this.publishActivity);
+    // activityListElem?.addEventListener('reactionChange', this.updateReaction);
+    // activityListElem?.addEventListener('share', this.shareActivity);
+
+
+    // const { activities, entities } = await this._apiClient.getActivities({});
+    // this._dataStore.addActivities(activities.map(a => Activity.create(a)));
+    // this._dataStore.addEntities(entities.map(e => Entity.create(e)));
+
+    // const reactions = await this._apiClient.getReactions();
+    // reactions.forEach(r => {
+    //   this._dataStore.addReaction(r.activityId, r.type);
+    // });
+
+    //this._root.addEventListener('click', this.routeClick);
+    // this._root.querySelectorAll('a').forEach(a => {
+    //   a.addEventListener('click', this.routeClick);
+    // });
+
+  }
+
+  private publishActivity = async (evt: Event) => {
+    //    console.log("New event {0}", evt);
+    let publishEvent = evt as CustomEvent;
+
+    let restreamOf = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
+
+    // may throw errors
+    const locationUri = await this.client.saveActivity(publishEvent.detail.content, restreamOf, publishEvent.detail.replyTo);
+
+    (publishEvent.detail.inputElem as ActivityInput).reset();
+
+    const newActivityId = locationUri.substring(locationUri.lastIndexOf('/') + 1);
+    const newActivityResp = await this.client.getActivity(newActivityId);
+    let newActivity = Activity.create(newActivityResp)
+    this.store.addActivities([newActivity]);
+
+    // we have to ensure that we have the record for the author....
+    if (!this.store._entities.has(newActivity.authorId)) {
+      const newEntityResp = await this.client.getEntity(newActivity.authorId);
+      this.store.addEntities([Entity.create(newEntityResp)]);
+    }
+
+    let activityListElem = document.getElementById('activityList');
+    let activityItem = ActivityItem.create(this.store._activities.get(newActivity.id), this.store._entities.get(newActivity.authorId));
+
+    let editor = new Editor();
+    activityItem.content = editor.deserialize(activityItem.content);
+
+    // what if we're adding a new comment?  we need to set it up here...
+
+    activityListElem?.prepend(activityItem);
+  }
+
+
+  private updateReaction = async (evt: Event) => {
+    console.log("Reaction has been updated...");
+
+    // should pass the old value and the new value
+    let newReaction = (evt as CustomEvent).detail.newReaction;
+    let prevReaction = (evt as CustomEvent).detail.previousReaction;
+    let activityElem = <ActivityItem>evt.target;
+
+    if (activityElem.activityId == null) {
+      return console.warn("failed to retrieve ActivityId from activity-item element.");
+    }
+
+    let success = await this.client.updateReaction(activityElem.activityId, newReaction);
+    if (!success) {
+      activityElem.undoReactionChange("API call failed to update reaction");
+    }
+  }
+
+  private restreamActivity = (evt: Event) => {
+    const restreamEvent = evt as CustomEvent;
+    console.log("set the activity input box with the activity item ", restreamEvent.detail);
+
+    // grab the first activity input element on the page (should update to an ID?)
+    let activityInput = <ActivityInput>document.getElementsByTagName('activity-input')[0];
+
+    // idea:
+    //  get the activity id, get the activity data, build new activityitem from that
+    // better to create a new Activity-Input element with values than cloning an existing node ??
+    let sourceActivity = restreamEvent.detail.activityElem as ActivityItem;
+    let clonedActivity = <ActivityItem>sourceActivity.cloneNode(false);
+    clonedActivity.isReplying = false;
+    clonedActivity.content = sourceActivity.content;
+    clonedActivity.hideControls = true;
+    activityInput.embedded = clonedActivity;
+    console.log("set embedded property");
+  }
+
+  private commentOnActivity = (evt: Event) => {
+    console.log(evt);
+    console.log("evt.target that's the button....");
+    (evt.target as HTMLElement).append(new ActivityInput());
+  }
+
+  private shareActivity = (evt: Event) => {
+    // generate mailto link and 'click' it.
+
+  }
+
+
+  private updateActivityList = () => {
+
+    let editor = new Editor();
+    this._activityList = this._activityList.map(a => {
+      a.content = editor.deserialize(a.content);
+      return a;
+    });
+
+    // let activityListElem = document.getElementById('activityList');
+    // this._dataStore._activities.forEach(a => {
+    //   if (a.parentId != undefined) return;
+    //   let activityItem = ActivityItem.create(a, this._dataStore._entities.get(a.authorId));
+    //   activityItem.content = editor.deserialize(activityItem.content);
+    //   if (a.restream) {
+    //     let restreamedActivity = this._dataStore._activities.get(a.restream)!;
+    //     if (!restreamedActivity) { throw Error("activity not found in datastore: " + a.restream); }
+    //     activityItem.restreamedActivity = ActivityItem.create(restreamedActivity, this._dataStore._entities.get(restreamedActivity?.authorId));
+    //     activityItem.restreamedActivity.content = editor.deserialize(activityItem.restreamedActivity.content);
+    //     activityItem.restreamedActivity.hideControls = true;
+    //   }
+    //   activityItem.replies = a.replies.map(r => {
+    //     let replyActivity = this._dataStore._activities.get(r);
+    //     if (!replyActivity) { throw Error("activity not found in datastore: " + r); }
+    //     let aItem = ActivityItem.create(replyActivity, this._dataStore._entities.get(replyActivity?.authorId));
+    //     aItem.content = editor.deserialize(aItem.content);
+    //     return aItem;
+    //   });
+    //   activityListElem?.append(activityItem);
+    // });
+  }
+
+
+  routeClick = (evt) => {
+    let routePath = "";
+    const target = evt.target as HTMLElement;
+    switch (target.tagName) {
+      case "A":
+        routePath = (target as HTMLAnchorElement).href;
+        evt.preventDefault();
+        break;
+      case "ACTIVITY-ITEM":
+        const originalTarget = evt.originalTarget;
+        if (originalTarget.tagName != 'SPAN') return;
+
+        if (originalTarget.classList.contains('prosemirror-mention-node')) {
+          routePath = '/e/' + originalTarget.getAttribute('data-mention-email');
+        }
+
+        if (originalTarget.classList.contains('prosemirror-tag-node')) {
+          routePath = '/t/' + originalTarget.getAttribute('data-tag');
+        }
+        break;
+      default:
+        return;
+    }
+
+    document.dispatchEvent(new CustomEvent('route', {
+      bubbles: true,
+      detail: {
+        path: routePath
+      }
+    }));
+    return false;
+  }
+
+}

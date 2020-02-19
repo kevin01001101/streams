@@ -263,7 +263,7 @@ export class ActivityItem extends HTMLElement {
         </div>
         <div class="card-body">
           <div style="text-align:right;"><small class="timestamp text-muted" title="${this.timestamp.toLocaleString(DateTime.DATETIME_SHORT)}">${this.timestamp.toRelative()}</small></div>
-          <div class="content">${unsafeHTML(this.content)}</div>
+          <div class="content"><slot name="content"></slot></div>
           ${this.restreamedActivity}
 
         </div>
@@ -298,11 +298,11 @@ export class ActivityItem extends HTMLElement {
           </button>
           <button type="button" title="View comments" @click=${this.toggleComments} class="comments btn btn-sm btn-outline-secondary">
             <i class="ms-Icon ms-Icon--Comment" aria-hidden="true"></i>
-            <span class="badge badge-light">${this.replies.length || ''}</span>
+            <span class="badge badge-light">${this.replies?.length || ''}</span>
           </button>
         </div>
         ${(this.isReplying ? html`<activity-input reply-to=${this.activityId}></activity-input>` : ``)}
-      ${(this.showComments ? this.replies : ``)}
+      ${(this.showComments ? this?.replies : ``)}
       </div>
 
     `;

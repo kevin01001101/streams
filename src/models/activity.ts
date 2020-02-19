@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import { Reaction } from './enums.js';
 import { ActivityResponse } from '../interfaces';
+import { Entity } from './entity.js';
 
 export class Activity {
 
@@ -8,6 +9,7 @@ export class Activity {
     content: string = "";
     created: DateTime | undefined;
     authorId: string = "";
+    author: Entity | undefined;
     myReaction: Reaction | undefined;
     reactions: Map<Reaction,number> = new Map<Reaction,number>();
     restream: string | undefined;

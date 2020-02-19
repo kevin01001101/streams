@@ -21,6 +21,7 @@ export interface EntityResponse {
   id: string;
   displayName: string;
   email: string;
+  alias: string;
 }
 
 export interface ReactionResponse {

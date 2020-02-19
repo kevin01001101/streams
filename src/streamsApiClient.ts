@@ -2,7 +2,7 @@ import { ApiClient } from './apiClient.js';
 import { ActivityResponse, ActivitiesResponse } from './interfaces.js';
 
 export class StreamsApiClient extends ApiClient {
-
+  //_apiHostname = "";
   constructor(hostname: string) {
     super(hostname);
   }
