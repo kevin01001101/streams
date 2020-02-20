@@ -9,14 +9,22 @@ import { Entity } from "../models/entity";
 
 export class ActivityList extends HTMLElement {
 
-  activities: Activity[] = [];
+  _activities: Activity[] = [];
+  get activities() {
+    return this._activities;
+  }
+  set activities(newValue) {
+    this._activities = newValue;
+    this._update();
+  } 
+  //Activity[] = [];
   entities: Entity[] = [];
 
   _template(): TemplateResult {
     return html`
       <div>
           ${repeat(this.activities, (i) => i.id, (i, index) => html`
-          <activity-item activity-id=${i.id} author-id=${i.author?.id} author-name=${i.author?.displayName}
+          <activity-item .activity=${i} activity-id=${i.id} author-id=${i.author?.id} author-name=${i.author?.displayName}
             author-email=${i.author?.email} author-alias=${i.author?.alias} timestamp=${i.created} }
             .reactions=${i.reactions} .replies=${i.replies}>
           <span slot="content">${unsafeHTML(i.content)}</span>
@@ -39,6 +47,7 @@ export class ActivityList extends HTMLElement {
   }
 
   _update() {
+    console.log("ActivityList render() ");
     render(this._template(), this);
   }
 

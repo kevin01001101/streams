@@ -8,6 +8,7 @@ import { Editor } from "../components/editor";
 
 import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
+import { ActivityList } from "../components/activityList";
 
 export class MainPage {
   store: DataStore;
@@ -36,7 +37,7 @@ export class MainPage {
         <div class="main">
             <activity-input @publishActivity=${this.publishActivity}></activity-input>
             <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-            <activity-list class="scrollable" .activities=${this.getActivities()}></activity-list>
+            <activity-list class="scrollable" .activities=${this._activityList}></activity-list>
         </div>
 
         <div class="infoCol">
@@ -71,10 +72,26 @@ export class MainPage {
     });
 
     this._instance._update();
-    //await this._instance.setupEventHandlers();
-    //this._instance.updateActivityList();
-
     return this._instance;
+  }
+
+  public static render(container: HTMLElement, options: any) {
+    if (this._instance == undefined) { this._instance = new this(container, undefined, undefined); }
+    // if activities promise has resovled, then set and render..
+    // if activities promise is not resovled yet, then set loading and render..
+    console.log("Options for MainPage render() ", options);
+    (options.activities as Promise<any>).then((val) => {
+      console.log("Promise has returned: ", val);
+      this._instance._activityList = val;
+      this._instance._update();
+      //let list = this._instance._root.querySelector('activity-list');
+      //(list as ActivityList).activities = val;
+      
+    });
+    console.log("outside of the promise, inside MainPage.render()");
+    //this._instance._activityList = options.activities;
+
+    this._instance._update();
   }
 
   _update = () => {

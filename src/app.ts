@@ -58,15 +58,24 @@ const routeHandler = (evt) => {
 }
 
 const renderRoute = async (route) => {
-    if (currentPage == undefined) {
-        currentPage = await MainPage.create(document.body, StreamsData, StreamsClient);
-    }
+    // if (currentPage == undefined) {
+    //     currentPage = await MainPage.create(document.body, StreamsData, StreamsClient);
+    // }
 
-    if (route.indexOf('/e/') == 0) {
+    if (route == "" || route == "/index.html") {
+        MainPage.render(document.body, {
+            activities: StreamsData.getActivities({
+                max:100,
+                paging: false,
+                sort: "created"
+            })
+        });
+    } else if (route == "/") {
+
+    } else if (route.indexOf('/e/') == 0) {
         let entityName = route.substring(route.lastIndexOf('/')+1)
         console.log("Entity feed for " + entityName);
-    }
-    if (route.indexOf('/t/') == 0) {
+    } else if (route.indexOf('/t/') == 0) {
         let tagName = route.substring(route.lastIndexOf('/')+1)
         console.log("Tag feed for tag " + tagName);
 
@@ -75,13 +84,10 @@ const renderRoute = async (route) => {
         // get activities that fit this criteria...
         // then render
 
-    }
-    else {
-        //let mainpage = await MainPage.create(document.body, StreamsData, StreamsClient);
-        //document.body.innerHTML = mainpage.render();
-        console.log("default feed");
-        //currentPage.
-
+    } else if (route.indexOf('/profile') == 0) {
+        //ProfilePage.render(document.body, {});
+    } else {
+        console.log("unrecognized route: ", route);
     }
 }
 

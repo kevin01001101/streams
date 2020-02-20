@@ -14,6 +14,7 @@ export class Activity {
     reactions: Map<Reaction,number> = new Map<Reaction,number>();
     restream: string | undefined;
     replies: string[] = [];
+    replyObjs: Activity[] = [];
     parentId: string | undefined;
 
     constructor()
