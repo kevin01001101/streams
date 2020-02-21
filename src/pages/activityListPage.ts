@@ -16,7 +16,7 @@ export class ActivityListPage {
   private _store: DataStore;
   private _root: HTMLElement;
   private _activities: Activity[] = [];
-
+  private _isLoading: boolean = false;
 
   _template(): TemplateResult {
     return html`
@@ -39,7 +39,7 @@ export class ActivityListPage {
         <div class="main">
             <activity-input @publishActivity=${this.publishActivity}></activity-input>
             <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-            <activity-list class="scrollable" .activities=${this._activities}></activity-list>
+            <activity-list class="scrollable" .activities=${this._activities} ?is-loading${this._isLoading}></activity-list>
         </div>
 
         <div class="infoCol">
@@ -61,8 +61,13 @@ export class ActivityListPage {
     }
 
     // turn this to a promise?  then show a loading status message while it's not resolved...
-    this._instance._activities = await this._instance._store.loadActivities({});
-
+    this._instance._isLoading = true;
+    this._instance._store.loadActivities({}).then((activities) => {
+      this._instance._activities = activities;
+      this._instance._isLoading = false;
+      this._instance._update();
+    });
+    //this._instance._activities = await this._instance._store.loadActivities({});
 
     //await this._instance.store.getReactions();
 
