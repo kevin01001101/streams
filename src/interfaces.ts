@@ -2,7 +2,7 @@ import { Reaction } from './models/enums.js';
 
 export interface ActivityRequest {
   content: string,
-  restreamOf?: string,
+  restreamId?: string,
   replyTo?: string
 };
 
@@ -11,9 +11,9 @@ export interface ActivityResponse {
   content: string;
   created: string;
   authorId: string;
-  reactions: ReactionResponse[];
-  restreamOf: string;
-  replies: string[];
+  reactions: [];
+  restreamId: string;
+  replyIds: string[];
   parentId: string;
 }
 

@@ -1,17 +1,66 @@
 import { ApiClient } from './apiClient.js';
 import { ActivityResponse, ActivitiesResponse } from './interfaces.js';
 
-export class StreamsApiClient extends ApiClient {
-  //_apiHostname = "";
-  constructor(hostname: string) {
-    super(hostname);
+export class StreamsApiClient implements ApiClient {
+  _apiHostname: string;
+
+  constructor(hostname) {
+    this._apiHostname = hostname || "";
   }
 
-  saveActivity = async (content:string, restreamOf?:string, replyTo?:string) => {
+  private prependHostname = (endpoint) => {
+    if (this._apiHostname != undefined && endpoint.indexOf(this._apiHostname) == -1) {
+      return this._apiHostname + endpoint;
+    }
+    else {
+      return endpoint;
+    }
+  }
+
+  protected post = async (endpoint:string, data) => {
+    const response = await fetch(this.prependHostname(endpoint), {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Access-Control-Expose-Headers': 'Location'
+      },
+      body: JSON.stringify(data)
+    });
+
+    return response;
+  };
+
+  protected get = async (endpoint:string) => {
+    const response = await fetch(this.prependHostname(endpoint), {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+    });
+    return response;
+  };
+
+  protected delete = async (endpoint:string) => {
+    const response = await fetch(this.prependHostname(endpoint), {
+      method: 'DELETE',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response;
+  };
+
+  saveActivity = async (content:string, restreamId?:string, replyTo?:string): Promise<ActivityResponse> => {
 
     let result = await this.post('/api/activities', {
       content,
-      restreamOf,
+      restreamId,
       replyTo
     });
 
@@ -24,11 +73,20 @@ export class StreamsApiClient extends ApiClient {
       throw new Error("streams api: response missing location header");
     }
 
-    // we want to reset the ActivityInput form here because we've confirmed that we successfully posted the reponse
-    // (evt.target as ActivityInput).reset();
-    // trigger a new event?
-    // or handle it on the return?
-    return newActivityUri;
+    // use the newActivityUri to get the ActivityResponse
+
+    return new Promise((resolve, reject) => {
+      resolve({
+        id:"123",
+        content:"content",
+        created:"created",
+        reactions: [],
+        restreamId: "",
+        replyIds: [],
+        parentId: "",
+        authorId:"123"});
+    });
+    //newActivityUri;
   }
 
   getActivity = async (activityId: string) => {

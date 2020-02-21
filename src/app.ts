@@ -3,16 +3,14 @@ import { StreamsDataStore } from './streamsDataStore.js';
 
 import { ActivityInput } from './components/activityInput.js';
 import { ActivityItem } from './components/activityItem.js';
-import { MainPage } from './pages/mainPage.js';
-
-import { Activity } from './models/activity.js';
-import { Entity } from './models/entity.js';
-import { Editor } from './components/editor.js';
-import { Reaction } from './models/enums.js';
 import { ActivityList } from './components/activityList.js';
 
-let StreamsData = new StreamsDataStore();
-let StreamsClient = new StreamsApiClient("https://localhost:44387");
+import { ActivityListPage } from './pages/activityListPage.js';
+
+
+let streamsClient = new StreamsApiClient("https://localhost:44387");
+let streamsData = new StreamsDataStore(streamsClient);
+
 let currentPage;
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -63,13 +61,17 @@ const renderRoute = async (route) => {
     // }
 
     if (route == "" || route == "/index.html") {
-        MainPage.render(document.body, {
-            activities: StreamsData.getActivities({
-                max:100,
-                paging: false,
-                sort: "created"
-            })
-        });
+        // add a filter for the mentions and tags pages...
+        currentPage = ActivityListPage.render(document.body, streamsData);
+
+        //MainPage.render(document.body, StreamsData)
+        // MainPage.render(document.body, {
+        //     activities: StreamsData.getActivities({
+        //         max:100,
+        //         paging: false,
+        //         sort: "created"
+        //     })
+        // });
     } else if (route == "/") {
 
     } else if (route.indexOf('/e/') == 0) {
@@ -79,7 +81,7 @@ const renderRoute = async (route) => {
         let tagName = route.substring(route.lastIndexOf('/')+1)
         console.log("Tag feed for tag " + tagName);
 
-        let { activities, entities } = await StreamsClient.getActivities({});
+        //let { activities, entities } = await StreamsClient.getActivities({});
 
         // get activities that fit this criteria...
         // then render

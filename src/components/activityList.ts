@@ -16,7 +16,7 @@ export class ActivityList extends HTMLElement {
   set activities(newValue) {
     this._activities = newValue;
     this._update();
-  } 
+  }
   //Activity[] = [];
   entities: Entity[] = [];
 
@@ -26,7 +26,7 @@ export class ActivityList extends HTMLElement {
           ${repeat(this.activities, (i) => i.id, (i, index) => html`
           <activity-item .activity=${i} activity-id=${i.id} author-id=${i.author?.id} author-name=${i.author?.displayName}
             author-email=${i.author?.email} author-alias=${i.author?.alias} timestamp=${i.created} }
-            .reactions=${i.reactions} .replies=${i.replies}>
+            .reactions=${i.reactionTotals} .replies=${i.replies}>
           <span slot="content">${unsafeHTML(i.content)}</span>
          </activity-item>`)
         }

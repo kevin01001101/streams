@@ -10,11 +10,13 @@ import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
 import { ActivityList } from "../components/activityList";
 
-export class MainPage {
-  store: DataStore;
-  client: ApiClient;
+export class ActivityListPage {
 
-  private static _instance: MainPage;
+  private static _instance: ActivityListPage;
+  private _store: DataStore;
+  private _root: HTMLElement;
+  private _activities: Activity[] = [];
+
 
   _template(): TemplateResult {
     return html`
@@ -37,7 +39,7 @@ export class MainPage {
         <div class="main">
             <activity-input @publishActivity=${this.publishActivity}></activity-input>
             <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-            <activity-list class="scrollable" .activities=${this._activityList}></activity-list>
+            <activity-list class="scrollable" .activities=${this._activities}></activity-list>
         </div>
 
         <div class="infoCol">
@@ -48,68 +50,69 @@ export class MainPage {
       </div>`
   };
 
-  private _root: HTMLElement;
-  _activityList: Activity[] = [];
-
-  private constructor(rootElem, store, client) {
-    this.store = store;
-    this.client = client;
+  private constructor(rootElem, store) {
     this._root = rootElem;
+    this._store = store;
   }
 
-  public static async create(container: HTMLElement, store: DataStore, client: ApiClient) {
+  public static async render(container: HTMLElement, store: DataStore) {
     if (this._instance == undefined) {
-      this._instance = new this(container, store, client);
+      this._instance = new this(container, store);
     }
 
-    const { activities, entities } = await this._instance.client.getActivities({});
-    this._instance.store.addActivities(activities.map(a => Activity.create(a)));
-    this._instance.store.addEntities(entities.map(e => Entity.create(e)));
+    // turn this to a promise?  then show a loading status message while it's not resolved...
+    this._instance._activities = await this._instance._store.loadActivities({});
 
-    const reactions = await this._instance.client.getReactions();
-    reactions.forEach(r => {
-      this._instance.store.addReaction(r.activityId, r.type);
-    });
 
-    this._instance._update();
-    return this._instance;
-  }
+    //await this._instance.store.getReactions();
 
-  public static render(container: HTMLElement, options: any) {
-    if (this._instance == undefined) { this._instance = new this(container, undefined, undefined); }
-    // if activities promise has resovled, then set and render..
-    // if activities promise is not resovled yet, then set loading and render..
-    console.log("Options for MainPage render() ", options);
-    (options.activities as Promise<any>).then((val) => {
-      console.log("Promise has returned: ", val);
-      this._instance._activityList = val;
-      this._instance._update();
-      //let list = this._instance._root.querySelector('activity-list');
-      //(list as ActivityList).activities = val;
-      
-    });
-    console.log("outside of the promise, inside MainPage.render()");
-    //this._instance._activityList = options.activities;
+    // this._instance.store.addActivities(activities.map(a => Activity.create(a)));
+    // this._instance.store.addEntities(entities.map(e => Entity.create(e)));
+
+    // const reactions = await this._instance.client.getReactions();
+    // reactions.forEach(r => {
+    //   this._instance.store.addReaction(r.activityId, r.type);
+    // });
 
     this._instance._update();
+    //return this._instance;
   }
+
+  // public static render(container: HTMLElement, options: any) {
+  //   if (this._instance == undefined) { this._instance = new this(container, undefined, undefined); }
+  //   // if activities promise has resovled, then set and render..
+  //   // if activities promise is not resovled yet, then set loading and render..
+  //   console.log("Options for ActivityListPage render() ", options);
+  //   (options.activities as Promise<any>).then((val) => {
+  //     console.log("Promise has returned: ", val);
+  //     this._instance._activityList = val;
+  //     this._instance._update();
+  //     //let list = this._instance._root.querySelector('activity-list');
+  //     //(list as ActivityList).activities = val;
+
+  //   });
+  //   console.log("outside of the promise, inside ActivityListPage.render()");
+  //   //this._instance._activityList = options.activities;
+
+  //   this._instance._update();
+  // }
 
   _update = () => {
     render(this._template(), this._root);
   }
 
-  private getActivities() {
-    let activities = this.store._activities;
-    let editor = new Editor();
+  // private getActivities() {
+  //   let activities = this._store._activities;
+  //   let editor = new Editor();
 
-    return [...activities.values()].map(a => {
-      a.author = this.store._entities.get(a.authorId);
-      a.content = editor.deserialize(a.content);
-      return a;
-    });
+  //   return [...activities.values()].map(a => {
+  //     a.author = this._store._entities.get(a.authorId);
+  //     a.content = editor.deserialize(a.content);
+  //     return a;
+  //   });
 
-    //return activities;
-  }
+  //   //return activities;
+  // }
 
   private setupEventHandlers = async () => {
 
@@ -143,35 +146,36 @@ export class MainPage {
 
   private publishActivity = async (evt: Event) => {
     //    console.log("New event {0}", evt);
-    let publishEvent = evt as CustomEvent;
+    // let publishEvent = evt as CustomEvent;
 
-    let restreamOf = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
+    // let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
 
-    // may throw errors
-    const locationUri = await this.client.saveActivity(publishEvent.detail.content, restreamOf, publishEvent.detail.replyTo);
+    // // may throw errors
+    // const locationUri = await this.client.saveActivity(publishEvent.detail.content, restreamId, publishEvent.detail.replyTo);
 
-    (publishEvent.detail.inputElem as ActivityInput).reset();
 
-    const newActivityId = locationUri.substring(locationUri.lastIndexOf('/') + 1);
-    const newActivityResp = await this.client.getActivity(newActivityId);
-    let newActivity = Activity.create(newActivityResp)
-    this.store.addActivities([newActivity]);
+    // (publishEvent.detail.inputElem as ActivityInput).reset();
 
-    // we have to ensure that we have the record for the author....
-    if (!this.store._entities.has(newActivity.authorId)) {
-      const newEntityResp = await this.client.getEntity(newActivity.authorId);
-      this.store.addEntities([Entity.create(newEntityResp)]);
-    }
+    // const newActivityId = locationUri.substring(locationUri.lastIndexOf('/') + 1);
+    // const newActivityResp = await this.client.getActivity(newActivityId);
+    // let newActivity = Activity.create(newActivityResp)
+    // this.store.addActivities([newActivity]);
 
-    let activityListElem = document.getElementById('activityList');
-    let activityItem = ActivityItem.create(this.store._activities.get(newActivity.id), this.store._entities.get(newActivity.authorId));
+    // // we have to ensure that we have the record for the author....
+    // if (!this.store._entities.has(newActivity.authorId)) {
+    //   const newEntityResp = await this.client.getEntity(newActivity.authorId);
+    //   this.store.addEntities([Entity.create(newEntityResp)]);
+    // }
 
-    let editor = new Editor();
-    activityItem.content = editor.deserialize(activityItem.content);
+    // let activityListElem = document.getElementById('activityList');
+    // let activityItem = ActivityItem.create(this.store._activities.get(newActivity.id), this.store._entities.get(newActivity.authorId));
 
-    // what if we're adding a new comment?  we need to set it up here...
+    // let editor = new Editor();
+    // activityItem.content = editor.deserialize(activityItem.content);
 
-    activityListElem?.prepend(activityItem);
+    // // what if we're adding a new comment?  we need to set it up here...
+
+    // activityListElem?.prepend(activityItem);
   }
 
 
@@ -187,10 +191,12 @@ export class MainPage {
       return console.warn("failed to retrieve ActivityId from activity-item element.");
     }
 
-    let success = await this.client.updateReaction(activityElem.activityId, newReaction);
-    if (!success) {
-      activityElem.undoReactionChange("API call failed to update reaction");
-    }
+    // FIX
+    // let success = await this.client.updateReaction(activityElem.activityId, newReaction);
+    // if (!success) {
+    //   activityElem.undoReactionChange("API call failed to update reaction");
+    // }
+
   }
 
   private restreamActivity = (evt: Event) => {
@@ -226,11 +232,11 @@ export class MainPage {
 
   private updateActivityList = () => {
 
-    let editor = new Editor();
-    this._activityList = this._activityList.map(a => {
-      a.content = editor.deserialize(a.content);
-      return a;
-    });
+    // let editor = new Editor();
+    // this._activityList = this._activityList.map(a => {
+    //   a.content = editor.deserialize(a.content);
+    //   return a;
+    // });
 
     // let activityListElem = document.getElementById('activityList');
     // this._dataStore._activities.forEach(a => {
