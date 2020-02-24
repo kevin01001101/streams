@@ -10,13 +10,6 @@ import { Entity } from "../models/entity";
 export class ActivityList extends HTMLElement {
 
   _activities: Activity[] = [];
-  get isLoading() {
-    return this.hasAttribute('is-loading');
-  }
-  set isLoading(newValue) {
-    if (newValue == undefined) { this.removeAttribute('is-loading'); }
-    else { this.setAttribute('is-loading', ''); }
-  }
 
   get activities() {
     return this._activities;
@@ -29,7 +22,7 @@ export class ActivityList extends HTMLElement {
   _template(): TemplateResult {
     return html`
       <div>
-        ${this.isLoading ? html`<div>Loading</div>` : ``}
+        <div class="loadingMsg">Loading...</div>
           ${repeat(this.activities, (i) => i.id, (i, index) => html`
           <activity-item .activity=${i} activity-id=${i.id} author-id=${i.author?.id} author-name=${i.author?.displayName}
             author-email=${i.author?.email} author-alias=${i.author?.alias} timestamp=${i.created} }
@@ -65,9 +58,6 @@ export class ActivityList extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue == newValue) return;
     switch (name) {
-      case 'is-loading':
-        this.isLoading = newValue != undefined;
-        break;
     }
     this._update();
   }

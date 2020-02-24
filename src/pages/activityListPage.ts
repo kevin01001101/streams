@@ -9,6 +9,7 @@ import { Editor } from "../components/editor";
 import { html, render, TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat';
 import { ActivityList } from "../components/activityList";
+import { classMap } from "lit-html/directives/class-map";
 
 export class ActivityListPage {
 
@@ -20,6 +21,16 @@ export class ActivityListPage {
 
   _template(): TemplateResult {
     return html`
+    <style type="text/css">
+      activity-list .loadingMsg {
+        display:none;
+      }
+      activity-list.loading .loadingMsg {
+        display:block;
+      }
+
+    </style>
+
       <div id="grid" @click=${this.routeClick}>
         <div class="leftNav">
             <heading>
@@ -39,7 +50,7 @@ export class ActivityListPage {
         <div class="main">
             <activity-input @publishActivity=${this.publishActivity}></activity-input>
             <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-            <activity-list class="scrollable" .activities=${this._activities} ?is-loading${this._isLoading}></activity-list>
+            <activity-list class="scrollable ${classMap({loading: this._isLoading})}" .activities=${this._activities}></activity-list>
         </div>
 
         <div class="infoCol">
@@ -51,6 +62,7 @@ export class ActivityListPage {
   };
 
   private constructor(rootElem, store) {
+    console.log("1");
     this._root = rootElem;
     this._store = store;
   }
@@ -65,6 +77,7 @@ export class ActivityListPage {
     this._instance._store.loadActivities({}).then((activities) => {
       this._instance._activities = activities;
       this._instance._isLoading = false;
+      console.log("B", this._instance._isLoading);
       this._instance._update();
     });
     //this._instance._activities = await this._instance._store.loadActivities({});
@@ -78,7 +91,7 @@ export class ActivityListPage {
     // reactions.forEach(r => {
     //   this._instance.store.addReaction(r.activityId, r.type);
     // });
-
+    console.log("A", this._instance._isLoading);
     this._instance._update();
     //return this._instance;
   }
@@ -103,6 +116,7 @@ export class ActivityListPage {
   // }
 
   _update = () => {
+    console.log("2");
     render(this._template(), this._root);
   }
 
