@@ -1,5 +1,5 @@
 import { ApiClient } from './apiClient.js';
-import { ActivityResponse, ActivitiesResponse } from './interfaces.js';
+import { ActivityResponse, ActivitiesResponse, ActivityRequest } from './interfaces.js';
 
 export class StreamsApiClient implements ApiClient {
   _apiHostname: string;
@@ -56,13 +56,9 @@ export class StreamsApiClient implements ApiClient {
     return response;
   };
 
-  saveActivity = async (content:string, restreamId?:string, replyTo?:string): Promise<ActivityResponse> => {
+  saveActivity = async (request: ActivityRequest): Promise<ActivitiesResponse> => {
 
-    let result = await this.post('/api/activities', {
-      content,
-      restreamId,
-      replyTo
-    });
+    let result = await this.post('/api/activities', request);
 
     if (result.status != 201) {
       throw new Error("streams api: unexpected response");
@@ -74,19 +70,8 @@ export class StreamsApiClient implements ApiClient {
     }
 
     // use the newActivityUri to get the ActivityResponse
-
-    return new Promise((resolve, reject) => {
-      resolve({
-        id:"123",
-        content:"content",
-        created:"created",
-        reactions: [],
-        restreamId: "",
-        replyIds: [],
-        parentId: "",
-        authorId:"123"});
-    });
-    //newActivityUri;
+    const activityId = newActivityUri.substring(newActivityUri.lastIndexOf('/')+1);
+    return await this.getActivity(activityId);
   }
 
   getActivity = async (activityId: string) => {
@@ -98,7 +83,7 @@ export class StreamsApiClient implements ApiClient {
     }
 
     const data = await result.json();
-    return <ActivityResponse>data;
+    return <ActivitiesResponse>data;
   };
 
 

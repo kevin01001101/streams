@@ -140,7 +140,7 @@ export class ActivityInput extends HTMLElement {
             "inputElem": this,
             "replyTo": this.replyTo
         };
-        this.dispatchEvent(new CustomEvent('publishActivity', { bubbles: true, detail: data }));
+        this.dispatchEvent(new CustomEvent('publishActivity', { bubbles: true, composed: true, detail: data }));
     }
 
     reset = () => {

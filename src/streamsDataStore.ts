@@ -6,7 +6,7 @@ import { DataStore } from './dataStore.js';
 import { ApiClient } from './apiClient.js';
 import { ObjectFactory } from './factories.js';
 
-import { EntityResponse, ActivityResponse } from './interfaces.js';
+import { EntityResponse, ActivityResponse, ActivityRequest } from './interfaces.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -26,6 +26,22 @@ export class StreamsDataStore implements DataStore {
     this._activityResponseMap = new Map<string, ActivityResponse>();
     this._entityResponseMap = new Map<string, EntityResponse>();
     this._factory = new ObjectFactory(this);
+  }
+
+  async saveActivity(request: ActivityRequest): Promise<Activity> {
+
+    let { activities: activities, entities: entities } = await this._apiClient.saveActivity(request);
+
+    activities.forEach(ar => {
+      this._activityResponseMap.set(ar.id, ar);
+    });
+    entities.forEach(er => {
+      this._entityResponseMap.set(er.id, er);
+    });
+
+    let activity = this._factory.createActivity(activities[0]);
+    if (activity == undefined) { throw Error ('failed to get activity on save()'); }
+    return activity;
   }
 
   addActivities = (activities: Activity[]) => {

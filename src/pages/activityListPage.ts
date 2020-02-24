@@ -3,11 +3,8 @@ import { ApiClient } from "../apiClient";
 import { Activity } from "../models/activity";
 import { ActivityInput } from "../components/activityInput";
 import { ActivityItem } from "../components/activityItem";
-import { Entity } from "../models/entity";
-import { Editor } from "../components/editor";
 
 import { html, render, TemplateResult } from 'lit-html';
-import { repeat } from 'lit-html/directives/repeat';
 import { ActivityList } from "../components/activityList";
 import { classMap } from "lit-html/directives/class-map";
 
@@ -164,16 +161,24 @@ export class ActivityListPage {
   }
 
   private publishActivity = async (evt: Event) => {
-    //    console.log("New event {0}", evt);
-    // let publishEvent = evt as CustomEvent;
 
-    // let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
+    console.log("New event {0}", evt);
+    let publishEvent = evt as CustomEvent;
 
-    // // may throw errors
-    // const locationUri = await this.client.saveActivity(publishEvent.detail.content, restreamId, publishEvent.detail.replyTo);
+    let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
 
+    // may throw errors..
+    let newActivity = await this._store.saveActivity({
+      content: publishEvent.detail.content,
+      restreamId: restreamId,
+      replyTo: publishEvent.detail.replyTo
+    });
 
-    // (publishEvent.detail.inputElem as ActivityInput).reset();
+    this._activities.unshift(newActivity);
+    this._update();
+     //publishEvent.detail.content, restreamId, publishEvent.detail.replyTo);
+
+    (publishEvent.detail.inputElem as ActivityInput).reset();
 
     // const newActivityId = locationUri.substring(locationUri.lastIndexOf('/') + 1);
     // const newActivityResp = await this.client.getActivity(newActivityId);

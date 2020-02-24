@@ -1,11 +1,11 @@
-import { ActivityResponse, ActivitiesResponse, ReactionResponse, EntityResponse } from "./interfaces";
+import { ActivityResponse, ActivitiesResponse, ReactionResponse, EntityResponse, ActivityRequest } from "./interfaces";
 
 
 export interface ApiClient {
 
-  saveActivity (content:string, restreamId?:string, replyTo?:string): Promise<ActivityResponse>;
+  saveActivity (request: ActivityRequest): Promise<ActivitiesResponse>;
 
-  getActivity (activityId: string): Promise<ActivityResponse>;
+  getActivity (activityId: string): Promise<ActivitiesResponse>;
   getActivities (options): Promise<ActivitiesResponse>;
   getReactions (): Promise<ReactionResponse[]>;
   updateReaction (activityId: string, reaction: string);
