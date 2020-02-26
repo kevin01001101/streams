@@ -30,6 +30,10 @@ export class StreamsDataStore implements DataStore {
 
   async saveActivity(request: ActivityRequest): Promise<Activity> {
 
+    // REFACTOR opportnity - change /api/activities back and add a lookup for the author entity
+    //  if it's not already available in the store... (or maybe even if it is?)
+    // we have to ensure that we have the record for the author....
+
     let { activities: activities, entities: entities } = await this._apiClient.saveActivity(request);
 
     activities.forEach(ar => {
@@ -41,20 +45,21 @@ export class StreamsDataStore implements DataStore {
 
     let activity = this._factory.createActivity(activities[0]);
     if (activity == undefined) { throw Error ('failed to get activity on save()'); }
+
     return activity;
   }
 
-  addActivities = (activities: Activity[]) => {
-    activities.forEach(a => {
-      this._activities.set(a.id, a);
-    });
-  }
+  // addActivities = (activities: Activity[]) => {
+  //   activities.forEach(a => {
+  //     this._activities.set(a.id, a);
+  //   });
+  // }
 
-  addEntities = (entities: Entity[]) => {
-    entities.forEach(e => {
-      this._entities.set(e.id, e);
-    });
-  }
+  // addEntities = (entities: Entity[]) => {
+  //   entities.forEach(e => {
+  //     this._entities.set(e.id, e);
+  //   });
+  // }
 
   addReaction = (activityId: string, reaction: Reaction) => {
     let activity = this._activities.get(activityId);
@@ -78,6 +83,9 @@ export class StreamsDataStore implements DataStore {
   getActivityInfo = (activityId: string): ActivityResponse | undefined => {
     return this._activityResponseMap.get(activityId);
   }
+  updateActivity = (activity: Activity) => {
+    this._activities.set(activity.id, activity);
+  }
 
   hasEntity = (entityId: string): boolean => {
     return this._entities.has(entityId);
@@ -88,7 +96,9 @@ export class StreamsDataStore implements DataStore {
   getEntityInfo = (entityId: string): EntityResponse | undefined => {
     return this._entityResponseMap.get(entityId);
   }
-
+  updateEntity = (entity: Entity) => {
+    this._entities.set(entity.id, entity);
+  }
 
   loadActivities = async (options: any): Promise<Activity[]> => {
 

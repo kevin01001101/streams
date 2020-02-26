@@ -24,7 +24,7 @@ export class Activity {
     created: DateTime | undefined;
     author: Entity | undefined;
     selectedReaction: Reaction | undefined;
-    reactionTotals: Map<Reaction,number> = new Map<Reaction,number>();
+    reactionCount: Map<Reaction,number> = new Map<Reaction,number>();
     restream?: Activity;
     replies: Activity[] = [];
     parent?: Activity;
@@ -34,7 +34,7 @@ export class Activity {
 
         let activity = new Activity();
         activity.id = dataObj.id;
-        dataObj.reactions?.forEach(r => activity.reactionTotals.set(r.type, r.count));
+        dataObj.reactions?.forEach(r => activity.reactionCount.set(r.type, r.count));
         activity.content = Activity.editor.deserialize(JSON.parse(dataObj.content));
         activity.created = DateTime.fromISO(dataObj.created);
         return activity;

@@ -4,6 +4,7 @@ import { unsafeHTML } from "lit-html/directives/unsafe-html";
 
 import { Activity } from "../models/activity";
 import { Entity } from "../models/entity";
+import { ActivityItem } from "../components/activityItem.js";
 
 
 
@@ -16,6 +17,7 @@ export class ActivityList extends HTMLElement {
   }
   set activities(newValue) {
     this._activities = newValue;
+    console.log("activities set in activityList ", this._activities);
     this._update();
   }
 
@@ -23,13 +25,10 @@ export class ActivityList extends HTMLElement {
     return html`
       <div>
         <div class="loadingMsg">Loading...</div>
-          ${repeat(this.activities, (i) => i.id, (i, index) => html`
-          <activity-item .activity=${i} activity-id=${i.id} author-id=${i.author?.id} author-name=${i.author?.displayName}
-            author-email=${i.author?.email} author-alias=${i.author?.alias} timestamp=${i.created} }
-            .reactions=${i.reactionTotals} .replies=${i.replies}>
-          <span slot="content">${unsafeHTML(i.content)}</span>
-         </activity-item>`)
-        }
+          ${repeat(this._activities, (i) => i.id, (i, index) => {
+            console.log("activityList template_repeat() ", i);
+            return html`<activity-item activity-id=${i.id} .activity=${i}></activity-item>`;
+          })}
       </div>
     `;
   }
@@ -47,7 +46,7 @@ export class ActivityList extends HTMLElement {
   }
 
   _update() {
-    console.log("ActivityList render() ");
+    console.log("ActivityList render() ", this.activities);
     render(this._template(), this);
   }
 

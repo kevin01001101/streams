@@ -15,8 +15,8 @@ export interface DataStore {
 
   saveActivity(request: ActivityRequest): Promise<Activity>;
 
-  addEntities (entities: Entity[]);
-  addReaction (activityId: string, reaction: Reaction);
+  // addEntities (entities: Entity[]);
+  // addReaction (activityId: string, reaction: Reaction);
 
   hasActivity(id: string): boolean;
   getActivity(id: string): Activity | undefined;
@@ -27,6 +27,9 @@ export interface DataStore {
   getActivityInfo(id: string): ActivityResponse | undefined;
   getEntityInfo(id: string): EntityResponse | undefined;
 
-  loadActivities(options: any):Promise<any>;
+  updateActivity(activity: Activity): void;
+  updateEntity(entity: Entity): void;
+
+  loadActivities(options: any):Promise<Activity[]>;
 }
 

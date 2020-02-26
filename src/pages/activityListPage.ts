@@ -44,10 +44,10 @@ export class ActivityListPage {
             </div>
         </div>
 
-        <div class="main">
-            <activity-input @publishActivity=${this.publishActivity}></activity-input>
+        <div class="main" @publishActivity=${this.publishActivity}>
+            <activity-input></activity-input>
             <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-            <activity-list class="scrollable ${classMap({loading: this._isLoading})}" .activities=${this._activities}></activity-list>
+            <activity-list class="scrollable ${classMap({loading: this._isLoading})}" .activities=${this._activities} @restreamActivity=${this.restreamActivity}></activity-list>
         </div>
 
         <div class="infoCol">
@@ -59,7 +59,6 @@ export class ActivityListPage {
   };
 
   private constructor(rootElem, store) {
-    console.log("1");
     this._root = rootElem;
     this._store = store;
   }
@@ -72,7 +71,7 @@ export class ActivityListPage {
     // turn this to a promise?  then show a loading status message while it's not resolved...
     this._instance._isLoading = true;
     this._instance._store.loadActivities({}).then((activities) => {
-      this._instance._activities = activities;
+      this._instance._activities = activities.filter(a => a.parent == undefined);
       this._instance._isLoading = false;
       console.log("B", this._instance._isLoading);
       this._instance._update();
@@ -93,71 +92,8 @@ export class ActivityListPage {
     //return this._instance;
   }
 
-  // public static render(container: HTMLElement, options: any) {
-  //   if (this._instance == undefined) { this._instance = new this(container, undefined, undefined); }
-  //   // if activities promise has resovled, then set and render..
-  //   // if activities promise is not resovled yet, then set loading and render..
-  //   console.log("Options for ActivityListPage render() ", options);
-  //   (options.activities as Promise<any>).then((val) => {
-  //     console.log("Promise has returned: ", val);
-  //     this._instance._activityList = val;
-  //     this._instance._update();
-  //     //let list = this._instance._root.querySelector('activity-list');
-  //     //(list as ActivityList).activities = val;
-
-  //   });
-  //   console.log("outside of the promise, inside ActivityListPage.render()");
-  //   //this._instance._activityList = options.activities;
-
-  //   this._instance._update();
-  // }
-
   _update = () => {
-    console.log("2");
     render(this._template(), this._root);
-  }
-
-  // private getActivities() {
-  //   let activities = this._store._activities;
-  //   let editor = new Editor();
-
-  //   return [...activities.values()].map(a => {
-  //     a.author = this._store._entities.get(a.authorId);
-  //     a.content = editor.deserialize(a.content);
-  //     return a;
-  //   });
-
-  //   //return activities;
-  // }
-
-  private setupEventHandlers = async () => {
-
-    //this._root.querySelector('activity-input');
-
-    // let activityInputElem = this._root.querySelector('activity-input');
-    // activityInputElem?.addEventListener('publishActivity', this.publishActivity);
-
-    // let activityListElem = document.getElementById('activityList');
-    // activityListElem?.addEventListener('restreamActivity', this.restreamActivity);
-    // activityListElem?.addEventListener('publishActivity', this.publishActivity);
-    // activityListElem?.addEventListener('reactionChange', this.updateReaction);
-    // activityListElem?.addEventListener('share', this.shareActivity);
-
-
-    // const { activities, entities } = await this._apiClient.getActivities({});
-    // this._dataStore.addActivities(activities.map(a => Activity.create(a)));
-    // this._dataStore.addEntities(entities.map(e => Entity.create(e)));
-
-    // const reactions = await this._apiClient.getReactions();
-    // reactions.forEach(r => {
-    //   this._dataStore.addReaction(r.activityId, r.type);
-    // });
-
-    //this._root.addEventListener('click', this.routeClick);
-    // this._root.querySelectorAll('a').forEach(a => {
-    //   a.addEventListener('click', this.routeClick);
-    // });
-
   }
 
   private publishActivity = async (evt: Event) => {
@@ -165,43 +101,27 @@ export class ActivityListPage {
     console.log("New event {0}", evt);
     let publishEvent = evt as CustomEvent;
 
-    let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
+    let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.id ?? undefined;
 
     // may throw errors..
     let newActivity = await this._store.saveActivity({
       content: publishEvent.detail.content,
-      restreamId: restreamId,
+      restreamOf: restreamId,
       replyTo: publishEvent.detail.replyTo
     });
 
-    this._activities.unshift(newActivity);
-    this._update();
-     //publishEvent.detail.content, restreamId, publishEvent.detail.replyTo);
+    console.log("save activity to data store is complete... ", newActivity.parent?.replies.length);
 
-    (publishEvent.detail.inputElem as ActivityInput).reset();
-
-    // const newActivityId = locationUri.substring(locationUri.lastIndexOf('/') + 1);
-    // const newActivityResp = await this.client.getActivity(newActivityId);
-    // let newActivity = Activity.create(newActivityResp)
-    // this.store.addActivities([newActivity]);
-
-    // // we have to ensure that we have the record for the author....
-    // if (!this.store._entities.has(newActivity.authorId)) {
-    //   const newEntityResp = await this.client.getEntity(newActivity.authorId);
-    //   this.store.addEntities([Entity.create(newEntityResp)]);
+    this._activities = [...this._store._activities.values()].filter(a => a.parent == undefined);
+    // // if the activity is not a reply to an existing activity...
+    // //  add to the list of displayed activities
+    // if (!newActivity.parent) {
+    //   this._activities.unshift(newActivity);
     // }
-
-    // let activityListElem = document.getElementById('activityList');
-    // let activityItem = ActivityItem.create(this.store._activities.get(newActivity.id), this.store._entities.get(newActivity.authorId));
-
-    // let editor = new Editor();
-    // activityItem.content = editor.deserialize(activityItem.content);
-
-    // // what if we're adding a new comment?  we need to set it up here...
-
-    // activityListElem?.prepend(activityItem);
+    console.log("activities for ActivitiesList updated, update not yet called.");
+    (publishEvent.detail.inputElem as ActivityInput).reset();
+    this._update();
   }
-
 
   private updateReaction = async (evt: Event) => {
     console.log("Reaction has been updated...");
@@ -211,7 +131,7 @@ export class ActivityListPage {
     let prevReaction = (evt as CustomEvent).detail.previousReaction;
     let activityElem = <ActivityItem>evt.target;
 
-    if (activityElem.activityId == null) {
+    if (activityElem.id == null) {
       return console.warn("failed to retrieve ActivityId from activity-item element.");
     }
 
@@ -224,22 +144,20 @@ export class ActivityListPage {
   }
 
   private restreamActivity = (evt: Event) => {
+
     const restreamEvent = evt as CustomEvent;
     console.log("set the activity input box with the activity item ", restreamEvent.detail);
 
     // grab the first activity input element on the page (should update to an ID?)
-    let activityInput = <ActivityInput>document.getElementsByTagName('activity-input')[0];
+    let activityInput = <ActivityInput>this._root.querySelector('div.main activity-input');
 
     // idea:
     //  get the activity id, get the activity data, build new activityitem from that
     // better to create a new Activity-Input element with values than cloning an existing node ??
     let sourceActivity = restreamEvent.detail.activityElem as ActivityItem;
-    let clonedActivity = <ActivityItem>sourceActivity.cloneNode(false);
-    clonedActivity.isReplying = false;
-    clonedActivity.content = sourceActivity.content;
-    clonedActivity.hideControls = true;
-    activityInput.embedded = clonedActivity;
+    activityInput.embedded = (sourceActivity as ActivityItem).clone();
     console.log("set embedded property");
+    evt.stopPropagation();
   }
 
   private commentOnActivity = (evt: Event) => {
@@ -295,9 +213,8 @@ export class ActivityListPage {
         evt.preventDefault();
         break;
       case "ACTIVITY-ITEM":
-        const originalTarget = evt.originalTarget;
-        if (originalTarget.tagName != 'SPAN') return;
-
+        const originalTarget = evt.originalTarget as HTMLElement;
+        if (originalTarget.tagName != 'SPAN') { return; }
         if (originalTarget.classList.contains('prosemirror-mention-node')) {
           routePath = '/e/' + originalTarget.getAttribute('data-mention-email');
         }
@@ -309,6 +226,8 @@ export class ActivityListPage {
       default:
         return;
     }
+
+    if (routePath.length == 0) return;
 
     document.dispatchEvent(new CustomEvent('route', {
       bubbles: true,
