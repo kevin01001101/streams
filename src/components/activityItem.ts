@@ -59,7 +59,7 @@ export class ActivityItem extends HTMLElement {
 
   set activity(newValue: Activity) {
     ({
-      id: this.id,
+      id: this.activityId,
       author: this.author,
       content: this.content,
       created: this.created,
@@ -70,7 +70,7 @@ export class ActivityItem extends HTMLElement {
       this.selectedReaction = newValue.selectedReaction ?? Reaction.None;
   }
 
-  id: string = "";
+  private activityId: string = "";
   private author?: Entity;
   private content: string = "";
   private created?: DateTime;
@@ -244,12 +244,9 @@ export class ActivityItem extends HTMLElement {
             <div style="text-align:right;"><small class="timestamp text-muted" title="${this.created?.toLocaleString(DateTime.DATETIME_SHORT)}">${this.created?.toRelative()}</small></div>
             <div class="content">${unsafeHTML(this.content)}</div>
             ${this.restreamedActivity ? html`
-              <activity-item hide-controls='' activity-id=${this.restreamedActivity.id}
-                author-id=${this.restreamedActivity.author?.id}
-                author-name=${this.restreamedActivity.author?.displayName} author-email=${this.restreamedActivity.author?.email}
-                author-alias=${this.restreamedActivity.author?.alias} timestamp=${this.restreamedActivity.created}
+              <activity-item hide-controls='' .activity=${this.restreamedActivity}
                 .content=${this.restreamedActivity.content} .reactions=${this.restreamedActivity.reactionCount}></activity-item>`
-              : ``}
+              : ''}
 
           </div>
           <div class="card-footer">
@@ -286,14 +283,12 @@ export class ActivityItem extends HTMLElement {
               <span class="badge badge-light">${this.replies.length || ''}</span>
             </button>
           </div>
-          ${this.isReplying ? html`<activity-input reply-to=${this.id}></activity-input>` : ``}
+          ${this.isReplying ? html`<activity-input reply-to=${this.activityId}></activity-input>` : ``}
         ${repeat((this.showComments ? this.replies : []), (i:Activity) => i.id, (i, index) => html`
-            <activity-item hide-controls='' activity-id=${i.id} author-id=${i.author?.id}
-                author-name=${i.author?.displayName} author-email=${i.author?.email}
-                author-alias=${i.author?.alias} timestamp=${i.created}
+            <activity-item hide-controls='' .activity=${i}
               .content=${i.content} .reactions=${i.reactionCount}></activity-item>`)}
         </div>`;
-        console.log('reply count ActivityItem ' + this.id + ' _update() --- ' + this.replies.length);
+        console.log('reply count ActivityItem ' + this.activityId + ' _update() --- ' + this.replies.length);
 
     return html`
         ${componentStyles}
@@ -385,7 +380,7 @@ export class ActivityItem extends HTMLElement {
   }
 
   _update() {
-    console.log("this_ " + this.id + " replies: " + this.replies.length);
+    console.log("this_ " + this.activityId + " replies: " + this.replies.length);
     render(this._template(), this._shadowRoot);
   }
 
@@ -422,8 +417,11 @@ export class ActivityItem extends HTMLElement {
 
   clone = () => {
     let clone = <ActivityItem>this.cloneNode(false);
-    clone.isReplying = false;
+    clone.activityId = this.activityId;
+    clone.author = this.author;
     clone.content = this.content;
+    clone.created = this.created;
+    clone.isReplying = false;
     clone.hideControls = true;
     return clone;
   }

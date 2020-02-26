@@ -27,7 +27,7 @@ export class ActivityList extends HTMLElement {
         <div class="loadingMsg">Loading...</div>
           ${repeat(this._activities, (i) => i.id, (i, index) => {
             console.log("activityList template_repeat() ", i);
-            return html`<activity-item activity-id=${i.id} .activity=${i}></activity-item>`;
+            return html`<activity-item .activity=${i}></activity-item>`;
           })}
       </div>
     `;
