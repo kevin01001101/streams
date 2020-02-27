@@ -251,7 +251,7 @@ export class ActivityItem extends HTMLElement {
           <div class="card-body">
             <div style="text-align:right;"><small class="timestamp text-muted" title="${this.created?.toLocaleString(DateTime.DATETIME_SHORT)}">${(Number(DateTime.local()) - Number(this.created)) < 1000 ? "just now" : this.created.toRelative()}</small></div>
             <div class="content">${unsafeHTML(this.content)}</div>
-            ${this.restreamedActivity ? html`
+            ${this.restreamedActivity && !this.hideControls ? html`
               <activity-item hide-controls='' .activity=${this.restreamedActivity}
                 .content=${this.restreamedActivity.content} .reactions=${this.restreamedActivity.reactionCount}></activity-item>`
               : ''}
