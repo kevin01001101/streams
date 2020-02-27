@@ -24,9 +24,11 @@ class EmbeddableActivityItem {
     } else {
       console.log("embedded element present");
       let editorElem = view.dom.closest('.editor');
-      let activityElem = editorElem.querySelector('activity-item');
+      let activityElem = <HTMLElement>editorElem.querySelector('activity-item');
       if (activityElem == undefined) {
         editorElem.appendChild(view.props.embeddedElem);
+      } else {
+        activityElem.replaceWith(view.props.embeddedElem);
       }
     }
   }
@@ -163,17 +165,17 @@ export class Editor {
     if (this._root == undefined) return;
 
     let g = (this._root.querySelector('[contenteditable]') as HTMLElement);
-    console.log('g ', g);
-    console.log(document.activeElement);
-    console.log("view has focus? " + this._view.hasFocus());
+    // console.log('g ', g);
+    // console.log(document.activeElement);
+    // console.log("view has focus? " + this._view.hasFocus());
     this._view.focus();
 
     // if we focus on an input (or hidden input) somewhere outside the custom element,
     //  then refocus on the editor, it works in firefox
-    console.log("search input element? ", (document.querySelector('input') as HTMLInputElement));
+    // console.log("search input element? ", (document.querySelector('input') as HTMLInputElement));
     (document.querySelector('input') as HTMLInputElement).focus();
 
-    console.log("view has focus? " + this._view.hasFocus());
+    // console.log("view has focus? " + this._view.hasFocus());
     document.getElementById('input.focusFix')?.focus();
     //console.log("search input element? ", document.getElementById('searchInput'));
 
@@ -217,6 +219,7 @@ export class Editor {
             return response.json();
           })
           .then((data) => {
+            if (data.length == 0) return;
             done(data.map(item => {
               return { "id": item.id, "name": item.displayName, "email": item.email }
             }));
@@ -234,6 +237,7 @@ export class Editor {
             return response.json();
           })
           .then((data) => {
+            if (data.length == 0) done([]);
             done(data.map(item => {
               return { "tag": item.text }
             }));

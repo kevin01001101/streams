@@ -1,5 +1,5 @@
 
-export enum Reaction {
+export enum ReactionType {
     None = "none",
     Happy = "Happy",
     Upset = "Upset",

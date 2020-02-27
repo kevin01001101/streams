@@ -1,5 +1,5 @@
 import { ApiClient } from './apiClient.js';
-import { ActivityResponse, ActivitiesResponse, ActivityRequest } from './interfaces.js';
+import { ActivityResponse, ActivitiesResponse, ActivityRequest, ReactionRequest, ReactionResponse, SelectedReactionsResponse } from './interfaces.js';
 
 export class StreamsApiClient implements ApiClient {
   _apiHostname: string;
@@ -56,6 +56,10 @@ export class StreamsApiClient implements ApiClient {
     return response;
   };
 
+
+
+
+
   saveActivity = async (request: ActivityRequest): Promise<ActivitiesResponse> => {
 
     let result = await this.post('/api/activities', request);
@@ -72,6 +76,15 @@ export class StreamsApiClient implements ApiClient {
     // use the newActivityUri to get the ActivityResponse
     const activityId = newActivityUri.substring(newActivityUri.lastIndexOf('/')+1);
     return await this.getActivity(activityId);
+  }
+
+  saveReaction = async (request: ReactionRequest): Promise<boolean> => {
+    let result = await this.post('/api/reactions', request);
+
+    if (result.status != 200) {
+      return false;
+    }
+    return true;
   }
 
   getActivity = async (activityId: string) => {
@@ -99,10 +112,10 @@ export class StreamsApiClient implements ApiClient {
   }
 
 
-  getReactions = async () => {
+  getSelectedReactions = async (options) => {
     const result = await this.get('/api/reactions');
     const data = await result.json();
-    return data;
+    return <SelectedReactionsResponse[]>data;
   };
 
   updateReaction = async (activityId: string, reaction: string) => {

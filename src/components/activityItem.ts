@@ -1,4 +1,4 @@
-import { Reaction } from "../models/enums.js";
+import { ReactionType } from "../models/enums.js";
 import { html, render, TemplateResult } from 'lit-html';
 import { classMap } from 'lit-html/directives/class-map.js';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
@@ -11,13 +11,13 @@ export class ActivityItem extends HTMLElement {
 
   _shadowRoot: ShadowRoot;
 
-  // get reaction() {
-  //   return this.getAttribute('reaction');
-  // }
-  // set reaction(newValue) {
-  //   if (newValue) { this.setAttribute('reaction', newValue); }
-  //   else { this.removeAttribute('reaction'); }
-  // }
+  get reaction() {
+    return this.getAttribute('reaction');
+  }
+  set reaction(newValue) {
+    if (newValue) { this.setAttribute('reaction', newValue); }
+    else { this.removeAttribute('reaction'); }
+  }
 
   // set reactions(newReactions: Map<Reaction,number>) {
   //   if (newReactions != undefined) {
@@ -67,18 +67,16 @@ export class ActivityItem extends HTMLElement {
       restream: this.restreamedActivity,
       replies: this.replies
       } = newValue);
-      this.selectedReaction = newValue.selectedReaction ?? Reaction.None;
   }
 
-  private activityId: string = "";
+  activityId: string = "";
   private author?: Entity;
   private content: string = "";
-  private created?: DateTime;
-  private selectedReaction: Reaction = Reaction.None;
-  private reactions: Map<Reaction,number> = new Map<Reaction,number>();
+  private created: DateTime = DateTime.local();
+  private reactions: Map<ReactionType,number> = new Map<ReactionType,number>();
   private restreamedActivity?: Activity;
   private replies: Activity[] = [];
-  private previousReaction: Reaction = Reaction.None;
+  private previousReaction: ReactionType = ReactionType.None;
 
 
   static create(activity, author) {
@@ -89,7 +87,7 @@ export class ActivityItem extends HTMLElement {
       content: newItem.content,
      // created: newItem.timestamp,
      // authorId: newItem.authorId,
-     // myReaction: newItem.reaction,
+     // myReaction: newItem.ReactionType,
      // reactions: newItem.reactions,
       //parentId: newItem.parentId?
     } = activity);
@@ -226,8 +224,6 @@ export class ActivityItem extends HTMLElement {
         }
         </style>`;
 
-
-
       const componentHtml = html`
         <div class="activity card ${classMap({"replying":this.isReplying, "new":this.isNew, "hideControls":this.hideControls})}" @resetActivity=${this.resetHandler} dir="ltr">
           <div class="card-header">
@@ -241,7 +237,7 @@ export class ActivityItem extends HTMLElement {
             </span>
           </div>
           <div class="card-body">
-            <div style="text-align:right;"><small class="timestamp text-muted" title="${this.created?.toLocaleString(DateTime.DATETIME_SHORT)}">${this.created?.toRelative()}</small></div>
+            <div style="text-align:right;"><small class="timestamp text-muted" title="${this.created?.toLocaleString(DateTime.DATETIME_SHORT)}">${(Number(DateTime.local()) - Number(this.created)) < 1000 ? "just now" : this.created.toRelative()}</small></div>
             <div class="content">${unsafeHTML(this.content)}</div>
             ${this.restreamedActivity ? html`
               <activity-item hide-controls='' .activity=${this.restreamedActivity}
@@ -251,24 +247,24 @@ export class ActivityItem extends HTMLElement {
           </div>
           <div class="card-footer">
             <div class="reactions" @click=${this.reactionHandler}>
-              <button type="button" data-reaction="${Reaction.Happy}" class="${classMap({"active":this.selectedReaction == Reaction.Happy})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Happy}" class="${classMap({"active":this.reaction == ReactionType.Happy})} btn btn-sm btn-outline-secondary">
                 <span class="emoji">😀</span>
-                <span class="badge badge-light">${this.reactions.get(Reaction.Happy) ? this.reactions.get(Reaction.Happy) : ''}</span>
+                <span class="badge badge-light">${this.reactions.get(ReactionType.Happy) ? this.reactions.get(ReactionType.Happy) : ''}</span>
                 <span class="sr-only">Happy response</span>
               </button>
-              <button type="button" data-reaction="${Reaction.Upset}" class="${classMap({"active":this.selectedReaction == Reaction.Upset})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Upset}" class="${classMap({"active":this.reaction == ReactionType.Upset})} btn btn-sm btn-outline-secondary">
                 <span class="emoji">😿</span>
-                <span class="badge badge-light">${this.reactions.get(Reaction.Upset) ? this.reactions.get(Reaction.Upset) : ''}</span>
+                <span class="badge badge-light">${this.reactions.get(ReactionType.Upset) ? this.reactions.get(ReactionType.Upset) : ''}</span>
                 <span class="sr-only">Upset response</span>
               </button>
-              <button type="button" data-reaction="${Reaction.Confused}" class="${classMap({"active":this.selectedReaction == Reaction.Confused})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Confused}" class="${classMap({"active":this.reaction == ReactionType.Confused})} btn btn-sm btn-outline-secondary">
                 <span class="emoji">😵</span>
-                <span class="badge badge-light">${this.reactions.get(Reaction.Confused) ? this.reactions.get(Reaction.Confused) : ''}</span>
+                <span class="badge badge-light">${this.reactions.get(ReactionType.Confused) ? this.reactions.get(ReactionType.Confused) : ''}</span>
                 <span class="sr-only">Confused response</span>
               </button>
-              <button type="button" data-reaction="${Reaction.Heart}" class="${classMap({"active":this.selectedReaction == Reaction.Heart})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Heart}" class="${classMap({"active":this.reaction == ReactionType.Heart})} btn btn-sm btn-outline-secondary">
                 <span class="emoji">❤</span>
-                <span class="badge badge-light">${this.reactions.get(Reaction.Heart) ? this.reactions.get(Reaction.Heart) : ''}</span>
+                <span class="badge badge-light">${this.reactions.get(ReactionType.Heart) ? this.reactions.get(ReactionType.Heart) : ''}</span>
                 <span class="sr-only">Heart response</span>
               </button>
             </div>
@@ -288,13 +284,13 @@ export class ActivityItem extends HTMLElement {
             <activity-item hide-controls='' .activity=${i}
               .content=${i.content} .reactions=${i.reactionCount}></activity-item>`)}
         </div>`;
-        console.log('reply count ActivityItem ' + this.activityId + ' _update() --- ' + this.replies.length);
+        //console.log('reply count ActivityItem ' + this.activityId + ' _update() --- ' + this.replies.length);
 
     return html`
         ${componentStyles}
         ${componentHtml}`;
   }
-//          <span slot="content">${unsafeHTML(i.content)}</span>
+
 
   restreamHandler = (evt: Event) => {
     console.log("Clicked to restream ", evt);
@@ -316,7 +312,6 @@ export class ActivityItem extends HTMLElement {
   }
 
   toggleComments = (evt:Event) => {
-    console.log("toggling the comments");
     this.showComments = !this.showComments;
   }
 
@@ -331,29 +326,30 @@ export class ActivityItem extends HTMLElement {
     if (!currentSelection) { return; }
 
     const selectedReaction = currentSelection.getAttribute('data-reaction');
-    let newReaction = selectedReaction == null ? Reaction.None : Reaction[selectedReaction];
+    let newReaction = selectedReaction == null ? ReactionType.None : ReactionType[selectedReaction];
 
-    let previousReaction = this.selectedReaction;
+    let previousReaction = this.reaction;
     if (newReaction == previousReaction) {
-      newReaction = Reaction.None;
+      newReaction = ReactionType.None;
     }
 
     this.dispatchEvent(new CustomEvent('reactionChange', {
       bubbles: true,
+      composed: true,
       detail: {
         newReaction,
         previousReaction
       }
     }));
 
-    this.selectedReaction = newReaction ?? Reaction.None;
+    this.reaction = newReaction ?? ReactionType.None;
     if (previousReaction) {
-      let prevCount = this.reactions.get(Reaction[previousReaction]) ?? 0;
-      this.reactions.set(Reaction[previousReaction], --prevCount);
+      let prevCount = this.reactions.get(ReactionType[previousReaction]) ?? 0;
+      this.reactions.set(ReactionType[previousReaction], --prevCount);
     }
-    if (this.selectedReaction) {
-      let curCount = this.reactions.get(Reaction[this.selectedReaction]) ?? 0;
-      this.reactions.set(Reaction[this.selectedReaction], ++curCount);
+    if (this.reaction) {
+      let curCount = this.reactions.get(ReactionType[this.reaction]) ?? 0;
+      this.reactions.set(ReactionType[this.reaction], ++curCount);
     }
     this._update();
   }
@@ -410,7 +406,7 @@ export class ActivityItem extends HTMLElement {
   }
 
   undoReactionChange = (reason) => {
-    this.selectedReaction = this.previousReaction;
+    this.reaction = this.previousReaction;
     console.warn("Undo Reaction Change.  Reason: ", reason);
   }
 

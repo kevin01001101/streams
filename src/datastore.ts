@@ -1,7 +1,8 @@
 import { Activity } from './models/activity.js';
 import { Entity } from './models/entity.js';
-import { Reaction } from './models/enums.js';
-import { ActivityResponse, EntityResponse, ActivityRequest } from './interfaces.js';
+import { ReactionType } from './models/enums.js';
+import { ActivityResponse, EntityResponse, ActivityRequest, ReactionRequest } from './interfaces.js';
+import { Reaction } from './models/reaction.js';
 
 
 export interface DataStore {
@@ -14,6 +15,7 @@ export interface DataStore {
   // queryActivities(filter: string): Activity[];
 
   saveActivity(request: ActivityRequest): Promise<Activity>;
+  saveReaction(request: ReactionRequest): Promise<boolean>;
 
   // addEntities (entities: Entity[]);
   // addReaction (activityId: string, reaction: Reaction);
@@ -31,5 +33,6 @@ export interface DataStore {
   updateEntity(entity: Entity): void;
 
   loadActivities(options: any):Promise<Activity[]>;
+  loadReactions(options: any):Promise<Reaction[]>;
 }
 

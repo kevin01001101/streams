@@ -1,12 +1,12 @@
 import { DataStore } from "../dataStore";
-import { ApiClient } from "../apiClient";
 import { Activity } from "../models/activity";
 import { ActivityInput } from "../components/activityInput";
 import { ActivityItem } from "../components/activityItem";
 
 import { html, render, TemplateResult } from 'lit-html';
-import { ActivityList } from "../components/activityList";
 import { classMap } from "lit-html/directives/class-map";
+import { ReactionType } from "../models/enums";
+import { Reaction } from '../models/reaction.js';
 
 export class ActivityListPage {
 
@@ -14,6 +14,7 @@ export class ActivityListPage {
   private _store: DataStore;
   private _root: HTMLElement;
   private _activities: Activity[] = [];
+  private _reactions: Reaction[] = [];
   private _isLoading: boolean = false;
 
   _template(): TemplateResult {
@@ -47,7 +48,11 @@ export class ActivityListPage {
         <div class="main" @publishActivity=${this.publishActivity}>
             <activity-input></activity-input>
             <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
-            <activity-list class="scrollable ${classMap({loading: this._isLoading})}" .activities=${this._activities} @restreamActivity=${this.restreamActivity}></activity-list>
+            <activity-list class="scrollable ${classMap({loading: this._isLoading})}"
+                .activities=${this._activities}
+                .reactions=${this._reactions}
+                @restreamActivity=${this.restreamActivity}
+                @reactionChange=${this.updateReaction}></activity-list>
         </div>
 
         <div class="infoCol">
@@ -70,8 +75,12 @@ export class ActivityListPage {
 
     // turn this to a promise?  then show a loading status message while it's not resolved...
     this._instance._isLoading = true;
-    this._instance._store.loadActivities({}).then((activities) => {
+    Promise.all([
+      this._instance._store.loadActivities({}),
+      this._instance._store.loadReactions({})
+    ]).then(([activities, reactions]) => {
       this._instance._activities = activities.filter(a => a.parent == undefined);
+      this._instance._reactions = reactions;
       this._instance._isLoading = false;
       console.log("B", this._instance._isLoading);
       this._instance._update();
@@ -100,8 +109,7 @@ export class ActivityListPage {
 
     console.log("New event {0}", evt);
     let publishEvent = evt as CustomEvent;
-
-    let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.id ?? undefined;
+    let restreamId = ((evt.target as ActivityInput).embedded as ActivityItem)?.activityId ?? undefined;
 
     // may throw errors..
     let newActivity = await this._store.saveActivity({
@@ -110,15 +118,15 @@ export class ActivityListPage {
       replyTo: publishEvent.detail.replyTo
     });
 
-    console.log("save activity to data store is complete... ", newActivity.parent?.replies.length);
+    //console.log("save activity to data store is complete... ", newActivity.parent?.replies.length);
 
-    this._activities = [...this._store._activities.values()].filter(a => a.parent == undefined);
-    // // if the activity is not a reply to an existing activity...
-    // //  add to the list of displayed activities
-    // if (!newActivity.parent) {
-    //   this._activities.unshift(newActivity);
-    // }
-    console.log("activities for ActivitiesList updated, update not yet called.");
+    this._activities = [...this._store._activities.values()].filter(a => a.parent == undefined).sort((a,b) => {
+      if (a.created < b.created) return 1;
+      if (a.created < b.created) return -1;
+      return 0;
+    });
+
+    //console.log("activities for ActivitiesList updated, update not yet called.");
     (publishEvent.detail.inputElem as ActivityInput).reset();
     this._update();
   }
@@ -136,10 +144,10 @@ export class ActivityListPage {
     }
 
     // FIX
-    // let success = await this.client.updateReaction(activityElem.activityId, newReaction);
-    // if (!success) {
-    //   activityElem.undoReactionChange("API call failed to update reaction");
-    // }
+    let success = await this._store.saveReaction({activityId: activityElem.activityId, type: newReaction});
+    if (!success) {
+      activityElem.undoReactionChange("API call failed to update reaction");
+    }
 
   }
 

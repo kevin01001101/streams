@@ -10,11 +10,8 @@ export class ActivityInput extends HTMLElement {
     }
     set embedded(newValue) {
         console.log("New value for embedded: ", newValue);
-        //this._activityItemPlugin.activity = newValue;
-        //this._embedded = newValue;
         this._editor.SetEmbedded(newValue);
         this._editor._view.focus();
-        //this._update();
     }
 
     get replyTo(): string | null {

@@ -1,12 +1,13 @@
 import { Entity } from './models/entity.js';
 import { Activity } from './models/activity.js';
-import { Reaction } from './models/enums.js';
+import { ReactionType } from './models/enums.js';
 
 import { DataStore } from './dataStore.js';
 import { ApiClient } from './apiClient.js';
 import { ObjectFactory } from './factories.js';
 
-import { EntityResponse, ActivityResponse, ActivityRequest } from './interfaces.js';
+import { EntityResponse, ActivityResponse, ActivityRequest, ReactionRequest } from './interfaces.js';
+import { Reaction } from './models/reaction.js';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -49,6 +50,10 @@ export class StreamsDataStore implements DataStore {
     return activity;
   }
 
+  async saveReaction(request: ReactionRequest): Promise<boolean> {
+    return await this._apiClient.saveReaction(request);
+  }
+
   // addActivities = (activities: Activity[]) => {
   //   activities.forEach(a => {
   //     this._activities.set(a.id, a);
@@ -61,11 +66,11 @@ export class StreamsDataStore implements DataStore {
   //   });
   // }
 
-  addReaction = (activityId: string, reaction: Reaction) => {
-    let activity = this._activities.get(activityId);
-    if (activity == undefined) { return; }
-    activity.selectedReaction = reaction;
-  }
+  // addReaction = (activityId: string, reaction: Reaction) => {
+  //   let activity = this._activities.get(activityId);
+  //   if (activity == undefined) { return; }
+  //   activity.selectedReaction = reaction;
+  // }
 
   get activities() {
 
@@ -115,45 +120,11 @@ export class StreamsDataStore implements DataStore {
 
     let results = activities.map(a => this._factory.createActivity(a));
     return results.filter(r => { return r != undefined }) as Activity[];
+  }
 
-    // let getActivitiesPromise = new Promise((resolve, reject) => {
-    //   Promise.all([apiClient.getActivities({}), apiClient.getReactions()]).then(r => {
-    //     console.log("RESULTS: ", r);
-    //     let {activities, entities} = r[0];
-    //     this.addActivities(activities);
-    //     this.addEntities(entities);
-
-    //     let c = r[1];  // reactions
-    //   })
-    //   .then(async () => {
-    //     console.log("delay start");
-    //     await delay(5000);
-    //     console.log("delay end");
-    //   })
-    //   .then(() => {
-    //     resolve([...this._activities.values()].map(a => {
-    //       a.author = this._entities.get(a.authorId);
-    //       a.replyObjs = a.replies?.map(r => this._activities.get(r)).filter(a => a != undefined) as Activity[];
-    //       //a.content = editor.deserialize(a.content);
-    //       return a;
-    //     }));
-    //   })
-    //   .catch((reason) => {
-    //     console.warn("Problem fetching values from the server: ", reason);
-    //     reject(reason);
-    //   });
-    // });
-
-    //new Promise((resolve, reject) => { })
-    // return [...this._activities.values()].map(a => {
-    //   a.author = this._entities.get(a.authorId);
-    //   a.replies = a.replyIds.map(r => this._activities.get(r)).filter(a => a != undefined) as Activity[];
-    //   //a.content = editor.deserialize(a.content);
-    //   return a;
-    // });
-
-    console.log("END getActivities()");
-    //return getActivitiesPromise;
+  loadReactions = async (options: any): Promise<Reaction[]> => {
+    let reactions = await this._apiClient.getSelectedReactions({});
+    return reactions.map(r => r as Reaction);
   }
 
 }

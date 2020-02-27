@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { Reaction } from './enums.js';
+import { ReactionType } from './enums.js';
 //import { ActivityResponse } from '../interfaces';
 import { Entity } from './entity.js';
 import { Editor } from '../components/editor.js';
@@ -21,10 +21,10 @@ export class Activity {
 
     id: string = "";
     content: string = "";
-    created: DateTime | undefined;
+    created: DateTime = DateTime.local();
     author: Entity | undefined;
-    selectedReaction: Reaction | undefined;
-    reactionCount: Map<Reaction,number> = new Map<Reaction,number>();
+    // selectedReaction: Reaction | undefined;
+    reactionCount: Map<ReactionType,number> = new Map<ReactionType,number>();
     restream?: Activity;
     replies: Activity[] = [];
     parent?: Activity;

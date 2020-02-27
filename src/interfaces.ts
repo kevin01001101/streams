@@ -1,10 +1,21 @@
-import { Reaction } from './models/enums.js';
+import { ReactionType } from './models/enums.js';
 
 export interface ActivityRequest {
   content: string,
   restreamOf?: string,
   replyTo?: string
 };
+
+export interface ReactionRequest {
+  type: ReactionType,
+  activityId: string
+}
+
+export interface SelectedReactionsResponse {
+  activityId: string,
+  personId: string,
+  type: ReactionType
+}
 
 export interface ActivityResponse {
   id: string; // guid
@@ -25,7 +36,7 @@ export interface EntityResponse {
 }
 
 export interface ReactionResponse {
-  type: Reaction;
+  type: ReactionType;
   count: number;
 }
 
