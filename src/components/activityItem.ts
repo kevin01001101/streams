@@ -193,24 +193,30 @@ export class ActivityItem extends HTMLElement {
           background-color:gray;
         }
 
+        .card button.showOnHover,
+        .card span.showOnHover {
+          opacity:0;
+        }
+        .card button.showOnHover.visible {
+          opacity:1;
+        }
 
         .card:hover .card-footer button {
           border-color:unset;
         }
-
-        .card-footer button.showOnHover {
-          opacity:0;
-        }
         .card:hover .card-footer button.showOnHover {
           opacity:1;
-          transition: 0.4s;
+          transition: 0.2s;
+        }
+        .card:hover span.showOnHover {
+          opacity:1;
         }
 
-        .bookmark {
+        .badge.control {
           height:100%;
           background-color:none;
         }
-        .bookmark:hover {
+        .badge.control:hover {
           background-color:lightgray;
           color:black;
         }
@@ -220,20 +226,26 @@ export class ActivityItem extends HTMLElement {
         }
 
         .card-footer ~ activity-item {
-            border-left: solid thick #f7f7f7;
+            border-left: solid thick #17a2b8;
         }
         </style>`;
+
+
+      let happyCount = this.reactions.get(ReactionType.Happy) ?? 0,
+          upsetCount = this.reactions.get(ReactionType.Upset) ?? 0,
+          confusedCount = this.reactions.get(ReactionType.Confused) ?? 0,
+          heartCount = this.reactions.get(ReactionType.Heart) ?? 0;
 
       const componentHtml = html`
         <div class="activity card ${classMap({"replying":this.isReplying, "new":this.isNew, "hideControls":this.hideControls})}" @resetActivity=${this.resetHandler} dir="ltr">
           <div class="card-header">
             <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
             <div class="author ml-1">${this.author?.displayName}</div>
-            <span @click=${this.shareHandler} class="share control badge badge-pill badge-light showOnHover">
+            <span @click=${this.shareHandler} class="share control badge badge-pill badge-light showOnHover" title="Share">
               <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i>
             </span>
-            <span class="bookmark control badge badge-pill badge-light">
-              <i class="ms-Icon ms-Icon--AddBookmark" aria-hidden="true"></i>
+            <span @click=${this.listHandler} class="bookmark control badge badge-pill badge-light showOnHover" title="Add to List">
+              <i class="ms-Icon ms-Icon--FavoriteList" aria-hidden="true"></i>
             </span>
           </div>
           <div class="card-body">
@@ -247,24 +259,24 @@ export class ActivityItem extends HTMLElement {
           </div>
           <div class="card-footer">
             <div class="reactions" @click=${this.reactionHandler}>
-              <button type="button" data-reaction="${ReactionType.Happy}" class="${classMap({"active":this.reaction == ReactionType.Happy})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Happy}" class="${classMap({"active":this.reaction == ReactionType.Happy, "visible":happyCount > 0})} btn btn-sm btn-outline-secondary showOnHover" title="${ReactionType.Happy}">
                 <span class="emoji">😀</span>
-                <span class="badge badge-light">${this.reactions.get(ReactionType.Happy) ? this.reactions.get(ReactionType.Happy) : ''}</span>
+                <span class="badge badge-light">${happyCount > 0 ? happyCount : ''}</span>
                 <span class="sr-only">Happy response</span>
               </button>
-              <button type="button" data-reaction="${ReactionType.Upset}" class="${classMap({"active":this.reaction == ReactionType.Upset})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Upset}" class="${classMap({"active":this.reaction == ReactionType.Upset, "visible":upsetCount > 0})} btn btn-sm btn-outline-secondary showOnHover" title="${ReactionType.Upset}">
                 <span class="emoji">😿</span>
-                <span class="badge badge-light">${this.reactions.get(ReactionType.Upset) ? this.reactions.get(ReactionType.Upset) : ''}</span>
+                <span class="badge badge-light">${upsetCount > 0 ? upsetCount : ''}</span>
                 <span class="sr-only">Upset response</span>
               </button>
-              <button type="button" data-reaction="${ReactionType.Confused}" class="${classMap({"active":this.reaction == ReactionType.Confused})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Confused}" class="${classMap({"active":this.reaction == ReactionType.Confused, "visible":confusedCount > 0})} btn btn-sm btn-outline-secondary showOnHover" title="${ReactionType.Confused}">
                 <span class="emoji">😵</span>
-                <span class="badge badge-light">${this.reactions.get(ReactionType.Confused) ? this.reactions.get(ReactionType.Confused) : ''}</span>
+                <span class="badge badge-light">${confusedCount > 0 ? confusedCount : ''}</span>
                 <span class="sr-only">Confused response</span>
               </button>
-              <button type="button" data-reaction="${ReactionType.Heart}" class="${classMap({"active":this.reaction == ReactionType.Heart})} btn btn-sm btn-outline-secondary">
+              <button type="button" data-reaction="${ReactionType.Heart}" class="${classMap({"active":this.reaction == ReactionType.Heart, "visible":heartCount > 0})} btn btn-sm btn-outline-secondary showOnHover" title="${ReactionType.Heart}">
                 <span class="emoji">❤</span>
-                <span class="badge badge-light">${this.reactions.get(ReactionType.Heart) ? this.reactions.get(ReactionType.Heart) : ''}</span>
+                <span class="badge badge-light">${heartCount > 0 ? heartCount : ''}</span>
                 <span class="sr-only">Heart response</span>
               </button>
             </div>
@@ -274,7 +286,7 @@ export class ActivityItem extends HTMLElement {
             <button type="button" title="Comment on this activity" @click=${this.commentHandler} class="reply showOnHover btn btn-sm btn-outline-secondary">
               <i class="ms-Icon ms-Icon--CommentAdd" aria-hidden="true"></i><span>Reply</span>
             </button>
-            <button type="button" title="View comments" @click=${this.toggleComments} class="comments btn btn-sm btn-outline-secondary">
+            <button type="button" title="View comments" @click=${this.toggleComments} class="${classMap({"visible":this.replies.length > 0})} comments showOnHover btn btn-sm btn-outline-secondary">
               <i class="ms-Icon ms-Icon--Comment" aria-hidden="true"></i>
               <span class="badge badge-light">${this.replies.length || ''}</span>
             </button>
@@ -284,7 +296,6 @@ export class ActivityItem extends HTMLElement {
             <activity-item hide-controls='' .activity=${i}
               .content=${i.content} .reactions=${i.reactionCount}></activity-item>`)}
         </div>`;
-        //console.log('reply count ActivityItem ' + this.activityId + ' _update() --- ' + this.replies.length);
 
     return html`
         ${componentStyles}
@@ -319,6 +330,12 @@ export class ActivityItem extends HTMLElement {
     console.log("Clicked to share ", evt);
     this.dispatchEvent(new CustomEvent('share', { bubbles: true }));
   }
+
+  listHandler(evt:Event) {
+    console.log("Clicked to add to list ", evt);
+    this.dispatchEvent(new CustomEvent('share', { bubbles: true }));
+  }
+
 
   reactionHandler = (evt:Event) => {
     console.log(evt.target);
