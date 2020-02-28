@@ -29,7 +29,7 @@ export class ActivityListPage {
 
     </style>
 
-      <div id="grid" @click=${this.routeClick}>
+      <div id="grid">
         <div class="leftNav">
             <heading>
                 <h1>STREAMS</h1>
@@ -68,37 +68,26 @@ export class ActivityListPage {
     this._store = store;
   }
 
-  public static async render(container: HTMLElement, store: DataStore) {
+  public static async initialize(container: HTMLElement, store: DataStore, dataQuery, activitiesFilter) {
     if (this._instance == undefined) {
       this._instance = new this(container, store);
     }
 
-    // turn this to a promise?  then show a loading status message while it's not resolved...
     this._instance._isLoading = true;
     Promise.all([
-      this._instance._store.loadActivities({}),
-      this._instance._store.loadReactions({})
+      this._instance._store.loadActivities(dataQuery),
+      this._instance._store.loadReactions(dataQuery)
     ]).then(([activities, reactions]) => {
-      this._instance._activities = activities.filter(a => a.parent == undefined);
+
+
+      this._instance._activities = activitiesFilter(activities);
       this._instance._reactions = reactions;
       this._instance._isLoading = false;
       console.log("B", this._instance._isLoading);
       this._instance._update();
     });
-    //this._instance._activities = await this._instance._store.loadActivities({});
-
-    //await this._instance.store.getReactions();
-
-    // this._instance.store.addActivities(activities.map(a => Activity.create(a)));
-    // this._instance.store.addEntities(entities.map(e => Entity.create(e)));
-
-    // const reactions = await this._instance.client.getReactions();
-    // reactions.forEach(r => {
-    //   this._instance.store.addReaction(r.activityId, r.type);
-    // });
-    console.log("A", this._instance._isLoading);
     this._instance._update();
-    //return this._instance;
+    return this._instance;
   }
 
   _update = () => {
@@ -168,48 +157,11 @@ export class ActivityListPage {
     evt.stopPropagation();
   }
 
-  private commentOnActivity = (evt: Event) => {
-    console.log(evt);
-    console.log("evt.target that's the button....");
-    (evt.target as HTMLElement).append(new ActivityInput());
-  }
-
   private shareActivity = (evt: Event) => {
     // generate mailto link and 'click' it.
-
   }
 
 
-  private updateActivityList = () => {
-
-    // let editor = new Editor();
-    // this._activityList = this._activityList.map(a => {
-    //   a.content = editor.deserialize(a.content);
-    //   return a;
-    // });
-
-    // let activityListElem = document.getElementById('activityList');
-    // this._dataStore._activities.forEach(a => {
-    //   if (a.parentId != undefined) return;
-    //   let activityItem = ActivityItem.create(a, this._dataStore._entities.get(a.authorId));
-    //   activityItem.content = editor.deserialize(activityItem.content);
-    //   if (a.restream) {
-    //     let restreamedActivity = this._dataStore._activities.get(a.restream)!;
-    //     if (!restreamedActivity) { throw Error("activity not found in datastore: " + a.restream); }
-    //     activityItem.restreamedActivity = ActivityItem.create(restreamedActivity, this._dataStore._entities.get(restreamedActivity?.authorId));
-    //     activityItem.restreamedActivity.content = editor.deserialize(activityItem.restreamedActivity.content);
-    //     activityItem.restreamedActivity.hideControls = true;
-    //   }
-    //   activityItem.replies = a.replies.map(r => {
-    //     let replyActivity = this._dataStore._activities.get(r);
-    //     if (!replyActivity) { throw Error("activity not found in datastore: " + r); }
-    //     let aItem = ActivityItem.create(replyActivity, this._dataStore._entities.get(replyActivity?.authorId));
-    //     aItem.content = editor.deserialize(aItem.content);
-    //     return aItem;
-    //   });
-    //   activityListElem?.append(activityItem);
-    // });
-  }
 
 
   routeClick = (evt) => {

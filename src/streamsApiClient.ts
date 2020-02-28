@@ -101,6 +101,10 @@ export class StreamsApiClient implements ApiClient {
 
 
   getActivities = async (options) => {
+
+    // build request from options
+    // e.g., {tags:["winning"], entities:["milam"]}  should query /api/activities/?$tags=winning&$entities=milam
+
     const result = await this.get('/api/activities/');
 
     if (result.status != 200) {

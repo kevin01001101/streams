@@ -61,8 +61,12 @@ const renderRoute = async (route) => {
     // }
 
     if (route == "" || route == "/index.html") {
-        // add a filter for the mentions and tags pages...
-        currentPage = ActivityListPage.render(document.body, streamsData);
+
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {
+            max: 10
+        }, (activities) => {
+            return activities.filter(a => a.parent == undefined);
+        });
 
         //MainPage.render(document.body, StreamsData)
         // MainPage.render(document.body, {
@@ -81,6 +85,9 @@ const renderRoute = async (route) => {
         let tagName = route.substring(route.lastIndexOf('/')+1)
         console.log("Tag feed for tag " + tagName);
 
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {tag:tagName}, (activities) => {
+            return activities
+        });
         //let { activities, entities } = await StreamsClient.getActivities({});
 
         // get activities that fit this criteria...
