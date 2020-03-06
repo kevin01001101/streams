@@ -110,7 +110,7 @@ export class StreamsDataStore implements DataStore {
     // get activities
     // we'll probably have to fetch them from the server...
 
-    let { activities: activities, entities: entities } = await this._apiClient.getActivities({});
+    let { activities: activities, entities: entities } = await this._apiClient.getActivities(options);
     activities.forEach(ar => {
       this._activityResponseMap.set(ar.id, ar);
     });

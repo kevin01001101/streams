@@ -99,14 +99,50 @@ export class StreamsApiClient implements ApiClient {
     return <ActivitiesResponse>data;
   };
 
+  private buildFilterString = (filterOptions) => {
+    let filterParts: string[] = [];
+
+    if (filterOptions.tags) {
+      filterParts.push("tags/any(t:t/Text eq '" + filterOptions.tags[0] + "')");
+    }
+
+    // by guid of person mentioned....
+    if (filterOptions.mentions) {
+      filterParts.push("mentions/any(m:m/Id eq " + filterOptions.mentions[0] + ")")
+    }
+    return filterParts.join(' and ');
+  }
+
+  private buildOdataQuery = (options) => {
+    let queryParts:string[] = [];
+    //queryParts.push("$expand=Author");
+
+    if (options.filter) {
+      queryParts.push("$filter=" + this.buildFilterString(options.filters));
+    }
+
+    if (queryParts.length == 0) return "";
+    return "?" + queryParts.join('&');
+  }
+
+//tags/any(t:t/text eq 'thankful') and
 
   getActivities = async (options) => {
 
     // build request from options
-    // e.g., {tags:["winning"], entities:["milam"]}  should query /api/activities/?$tags=winning&$entities=milam
+    // options = {
+    //   filter = {
+    //       tags = ["Thankful"],
+    //       mentions = ["Smith, Jo Jo"]
+    //   }
+    // }
 
-    const result = await this.get('/api/activities/');
+    //e.g., {tags:["winning"], entities:["milam"]}  should query /api/activities/?$tags=winning&$entities=milam
 
+    // turn options into odata query?
+
+    //const result = await this.get('/odata/streams' + this.buildOdataQuery(options));
+    const result = await this.get('/odata/streams' + '?$expand=Reactions($select=Type),Author($select=Id),Replies($select=Id;$count=true),ReplyTo($expand=Author($select=Id)),RestreamOf($expand=Author($select=Id))&$orderby=Created desc' + this.buildOdataQuery(options));
     if (result.status != 200) {
       throw new Error("streams api: unable to get activities");
     }

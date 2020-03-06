@@ -62,20 +62,12 @@ const renderRoute = async (route) => {
 
     if (route == "" || route == "/index.html") {
 
-        currentPage = ActivityListPage.initialize(document.body, streamsData, {
-            max: 10
-        }, (activities) => {
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {}, (activities) => {
             return activities.filter(a => a.parent == undefined);
         });
 
-        //MainPage.render(document.body, StreamsData)
-        // MainPage.render(document.body, {
-        //     activities: StreamsData.getActivities({
-        //         max:100,
-        //         paging: false,
-        //         sort: "created"
-        //     })
-        // });
+        //https://localhost:44387/odata/streams?$expand=Reactions($select=Type),Author($select=Id),Replies($select=Id;$count=true),ReplyTo($expand=Author($select=Id)),RestreamOf($expand=Author($select=Id))&$orderby=Created desc
+
     } else if (route == "/") {
 
     } else if (route.indexOf('/e/') == 0) {
@@ -85,13 +77,13 @@ const renderRoute = async (route) => {
         let tagName = route.substring(route.lastIndexOf('/')+1)
         console.log("Tag feed for tag " + tagName);
 
-        currentPage = ActivityListPage.initialize(document.body, streamsData, {tag:tagName}, (activities) => {
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {
+            filter: {
+                tags: [tagName]
+            }
+        }, (activities) => {
             return activities
         });
-        //let { activities, entities } = await StreamsClient.getActivities({});
-
-        // get activities that fit this criteria...
-        // then render
 
     } else if (route.indexOf('/profile') == 0) {
         //ProfilePage.render(document.body, {});
