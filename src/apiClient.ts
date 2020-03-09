@@ -13,7 +13,7 @@ export interface ApiClient {
   saveReaction (request: ReactionRequest): Promise<boolean>;
 
   getActivity (activityId: string): Promise<ActivitiesResponse>;
-  getActivities (options): Promise<ActivitiesResponse>;
+  getActivities (options): Promise<ActivityResponse[]>;
   getSelectedReactions (options): Promise<SelectedReactionsResponse[]>;
   updateReaction (activityId: string, reaction: string);
   getEntity (entityId: string): Promise<EntityResponse>;

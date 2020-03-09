@@ -108,26 +108,14 @@ export class Editor {
       state: this._state
     });
 
+    let menubar = <HTMLElement>this._root.querySelector('.ProseMirror-menubar');
+    menubar.style.removeProperty('min-height');
 
-            //console.log(this._view);
-        //this._view.setProps({"isEmbedded":this._embedded != undefined});
-        let menubar = <HTMLElement>this._root.querySelector('.ProseMirror-menubar');
-        menubar.style.removeProperty('min-height');
+    //console.log(this._view);
+    let svg = document.getElementById('ProseMirror-icon-collection');
+    if (svg) this._root.appendChild(svg);
 
-        //console.log(this._view);
-        let svg = document.getElementById('ProseMirror-icon-collection');
-        if (svg) this._root.appendChild(svg);
-        this._root.style.display = 'block';
-
-        this.Focus();
-
-    //this.style.display = 'none';
-    //this.shadowRoot?.appendChild(_activityInputTemplate.content.cloneNode(true));
-    // this.shadowRoot?.querySelector('#editorStyles')?.addEventListener('load', () => {
-    //     console.log("proseMirror styles loaded");
-    //     this.initialize();
-    // });
-
+    this.Focus();
   }
 
   GetEmbedded = () => {
@@ -158,7 +146,7 @@ export class Editor {
     this.SetEmbedded(undefined);
     this._state = this.GetNewEditorState();
     this._view.updateState(this._state);
-    this.Focus();
+    // this.Focus();
   }
 
   Focus = () => {

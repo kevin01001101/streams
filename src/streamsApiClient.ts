@@ -1,5 +1,5 @@
 import { ApiClient } from './apiClient.js';
-import { ActivityResponse, ActivitiesResponse, ActivityRequest, ReactionRequest, ReactionResponse, SelectedReactionsResponse } from './interfaces.js';
+import { ActivityResponse, ActivitiesResponse, ActivityRequest, ReactionRequest, ReactionResponse, SelectedReactionsResponse, ODataResponse } from './interfaces.js';
 
 export class StreamsApiClient implements ApiClient {
   _apiHostname: string;
@@ -108,47 +108,38 @@ export class StreamsApiClient implements ApiClient {
 
     // by guid of person mentioned....
     if (filterOptions.mentions) {
-      filterParts.push("mentions/any(m:m/Id eq " + filterOptions.mentions[0] + ")")
+      filterParts.push("mentions/any(m:m/Email eq '" + filterOptions.mentions[0] + "')")
     }
+
     return filterParts.join(' and ');
   }
 
   private buildOdataQuery = (options) => {
     let queryParts:string[] = [];
-    //queryParts.push("$expand=Author");
 
+    if (options.expand) {
+      queryParts.push("$expand=" + options.expand);
+    }
     if (options.filter) {
-      queryParts.push("$filter=" + this.buildFilterString(options.filters));
+      queryParts.push("$filter=" + this.buildFilterString(options.filter));
+    }
+    if (options.orderby) {
+      queryParts.push("$orderby=" + options.orderby);
     }
 
     if (queryParts.length == 0) return "";
-    return "?" + queryParts.join('&');
+    return queryParts.join('&');
   }
 
-//tags/any(t:t/text eq 'thankful') and
 
   getActivities = async (options) => {
-
-    // build request from options
-    // options = {
-    //   filter = {
-    //       tags = ["Thankful"],
-    //       mentions = ["Smith, Jo Jo"]
-    //   }
-    // }
-
-    //e.g., {tags:["winning"], entities:["milam"]}  should query /api/activities/?$tags=winning&$entities=milam
-
-    // turn options into odata query?
-
-    //const result = await this.get('/odata/streams' + this.buildOdataQuery(options));
-    const result = await this.get('/odata/streams' + '?$expand=Reactions($select=Type),Author($select=Id),Replies($select=Id;$count=true),ReplyTo($expand=Author($select=Id)),RestreamOf($expand=Author($select=Id))&$orderby=Created desc' + this.buildOdataQuery(options));
+    const result = await this.get('/odata/streams?' + this.buildOdataQuery(options));
     if (result.status != 200) {
       throw new Error("streams api: unable to get activities");
     }
 
     const data = await result.json();
-    return <ActivitiesResponse>data;
+    return <ActivityResponse[]>(data as ODataResponse).value;
   }
 
 

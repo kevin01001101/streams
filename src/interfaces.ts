@@ -21,23 +21,28 @@ export interface ActivityResponse {
   id: string; // guid
   content: string;
   created: string;
-  authorId: string;
+  author: EntityResponse;
   reactions: [];
-  restreamId?: string;
-  replyIds: string[];
-  parentId?: string;
+  restreamOf?: ActivityResponse;
+  replies: ActivityResponse[];
+  replyTo?: ActivityResponse;
 }
 
 export interface EntityResponse {
   id: string;
+  alias: string;
   displayName: string;
   email: string;
-  alias: string;
 }
 
 export interface ReactionResponse {
   type: ReactionType;
   count: number;
+}
+
+export interface ODataResponse {
+  "@odata.context": string;
+  value: any;
 }
 
 export interface ActivitiesResponse {

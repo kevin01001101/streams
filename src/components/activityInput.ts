@@ -48,6 +48,11 @@ export class ActivityInput extends HTMLElement {
 
     _update() {
         render(this._template(), this._shadowRoot);
+        this.shadowRoot?.querySelector('#editorStyles')?.addEventListener('load', () => {
+            console.log("styles loaded....");
+            this.style.visibility = "visible";
+            this._editor.Focus();
+        });
     }
 
     _template(): TemplateResult {
@@ -58,6 +63,7 @@ export class ActivityInput extends HTMLElement {
         :host {
             margin-top:1rem;
             margin-bottom:2rem;
+            visibility:hidden;
         }
         .editor {
             margin-bottom:0.4rem;
@@ -110,7 +116,7 @@ export class ActivityInput extends HTMLElement {
           }
 
           .ProseMirror p.empty-node:first-child::before {
-            /* content: 'type your activity details here'; */
+            content: 'type your activity details here';
           }
 
         </style>

@@ -8,7 +8,6 @@ interface ActivityInfo {
     id: string;
     content: string;
     created: string;
-    authorId: string;
     reactions?: any;
     restreamId?: string;
     replyIds?: string[];
@@ -30,8 +29,6 @@ export class Activity {
     parent?: Activity;
 
     static create(dataObj: ActivityInfo) {
-        if (dataObj.authorId == undefined) { throw Error("activity must have a valid author"); }
-
         let activity = new Activity();
         activity.id = dataObj.id;
         dataObj.reactions?.forEach(r => activity.reactionCount.set(r.type, r.count));

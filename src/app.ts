@@ -62,24 +62,56 @@ const renderRoute = async (route) => {
 
     if (route == "" || route == "/index.html") {
 
-        currentPage = ActivityListPage.initialize(document.body, streamsData, {}, (activities) => {
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {
+            showing: "Your Feed",
+            dataQuery: {
+                expand: "Reactions($select=Type),Author,Replies($count=true),ReplyTo($expand=Author),RestreamOf($expand=Author)",
+                orderby: "Created desc"
+            }
+        }, (activities) => {
             return activities.filter(a => a.parent == undefined);
         });
 
         //https://localhost:44387/odata/streams?$expand=Reactions($select=Type),Author($select=Id),Replies($select=Id;$count=true),ReplyTo($expand=Author($select=Id)),RestreamOf($expand=Author($select=Id))&$orderby=Created desc
+/*
+?$expand=
+Reactions($select=Type),
+Author,
+Replies($count=true),
+ReplyTo($expand=Author),
+RestreamOf($expand=Author)&$orderby=Created desc
+*/
 
     } else if (route == "/") {
 
     } else if (route.indexOf('/e/') == 0) {
         let entityName = route.substring(route.lastIndexOf('/')+1)
         console.log("Entity feed for " + entityName);
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {
+            showing: "@" + entityName,
+            dataQuery: {
+                expand: "Reactions($select=Type),Author,Replies($count=true),ReplyTo($expand=Author),RestreamOf($expand=Author)",
+                orderby: "Created desc",
+                filter: {
+                    mentions: [entityName]
+                }
+            }
+        }, (activities) => {
+            return activities
+        });
+
     } else if (route.indexOf('/t/') == 0) {
         let tagName = route.substring(route.lastIndexOf('/')+1)
         console.log("Tag feed for tag " + tagName);
 
         currentPage = ActivityListPage.initialize(document.body, streamsData, {
-            filter: {
-                tags: [tagName]
+            showing: "#" + tagName,
+            dataQuery: {
+                expand: "Reactions($select=Type),Author,Replies($count=true),ReplyTo($expand=Author),RestreamOf($expand=Author)",
+                orderby: "Created desc",
+                filter: {
+                    tags: [tagName]
+                }
             }
         }, (activities) => {
             return activities

@@ -16,6 +16,14 @@ export class ActivityListPage {
   private _activities: Activity[] = [];
   private _reactions: Reaction[] = [];
   private _isLoading: boolean = false;
+  private _showing: string = "";
+
+  get nowShowing(): string {
+    return this._showing;
+  }
+  set nowShowing(newValue) {
+    this._showing = newValue;
+  }
 
   _template(): TemplateResult {
     return html`
@@ -29,7 +37,7 @@ export class ActivityListPage {
 
     </style>
 
-      <div id="grid">
+      <div id="grid" @click=${this.routeClick}>
         <div class="leftNav">
             <heading>
                 <h1>STREAMS</h1>
@@ -47,7 +55,7 @@ export class ActivityListPage {
 
         <div class="main" @publishActivity=${this.publishActivity}>
             <activity-input></activity-input>
-            <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>Your Feed</span></h2>
+            <h2 style="background-color:lightblue; padding:0.4rem; margin-top:1rem;">Now Showing: <span>${this._showing}</span></h2>
             <activity-list class="scrollable ${classMap({loading: this._isLoading})}"
                 .activities=${this._activities}
                 .reactions=${this._reactions}
@@ -68,15 +76,16 @@ export class ActivityListPage {
     this._store = store;
   }
 
-  public static async initialize(container: HTMLElement, store: DataStore, dataQuery, activitiesFilter) {
+  public static async initialize(container: HTMLElement, store: DataStore, options, activitiesFilter) {
     if (this._instance == undefined) {
       this._instance = new this(container, store);
     }
 
     this._instance._isLoading = true;
+    this._instance._showing = options.showing;
     Promise.all([
-      this._instance._store.loadActivities(dataQuery),
-      this._instance._store.loadReactions(dataQuery)
+      this._instance._store.loadActivities(options.dataQuery),
+      this._instance._store.loadReactions(options.dataQuery)
     ]).then(([activities, reactions]) => {
 
 

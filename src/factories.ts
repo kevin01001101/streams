@@ -21,12 +21,12 @@ export class ObjectFactory {
       store.updateActivity(newActivity);
     }
 
-    newActivity.author = store.hasEntity(activityData.authorId) ? store.getEntity(activityData.authorId)! : this.createEntity(store.getEntityInfo(activityData.authorId));
-    if (activityData.restreamId) {
-      newActivity.restream = store.hasActivity(activityData.restreamId) ? store.getActivity(activityData.restreamId) : this.createActivity(store.getActivityInfo(activityData.restreamId));
+    newActivity.author = store.hasEntity(activityData.author.id) ? store.getEntity(activityData.author.id)! : this.createEntity(activityData.author);
+    if (activityData.restreamOf) {
+      newActivity.restream = store.hasActivity(activityData.restreamOf.id) ? store.getActivity(activityData.restreamOf.id) : this.createActivity(store.getActivityInfo(activityData.restreamOf.id));
     }
-    if (activityData.parentId) {
-      newActivity.parent = store.hasActivity(activityData.parentId) ? store.getActivity(activityData.parentId) : this.createActivity(store.getActivityInfo(activityData.parentId));
+    if (activityData.replyTo) {
+      newActivity.parent = store.hasActivity(activityData.replyTo.id) ? store.getActivity(activityData.replyTo.id) : this.createActivity(store.getActivityInfo(activityData.replyTo.id));
       if (newActivity.parent) { newActivity.parent?.replies.push(newActivity); store.updateActivity(newActivity.parent); }
     }
     // newActivity.replies = activityData.replyIds.map(r => {
