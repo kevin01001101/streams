@@ -82,7 +82,10 @@ ReplyTo($expand=Author),
 RestreamOf($expand=Author)&$orderby=Created desc
 */
 
-    } else if (route == "/") {
+    } else if (route.match(/@(\\w)+/)) {
+        let authorName = route.match(/([@\w]+)/)[0];
+        console.log(authorName);
+
 
     } else if (route.indexOf('/e/') == 0) {
         let entityName = route.substring(route.lastIndexOf('/')+1)

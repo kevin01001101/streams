@@ -118,9 +118,11 @@ export class ActivityItem extends HTMLElement {
         .activity.card {
           margin:0.5rem;
           margin-bottom:1rem;
+          margin-left: calc(1rem + 4px);
         }
         .activity.card.new {
           filter: drop-shadow(4px 4px 8px blue);
+          border-left: 1rem solid yellowgreen;
         }
         .activity.card.replying {
           margin-bottom:2rem;
@@ -240,7 +242,12 @@ export class ActivityItem extends HTMLElement {
         <div class="activity card ${classMap({"replying":this.isReplying, "new":this.isNew, "hideControls":this.hideControls})}" @resetActivity=${this.resetHandler} dir="ltr">
           <div class="card-header">
             <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
-            <div class="author ml-1">${this.author?.displayName}</div>
+            <div class="ml-2" style="flex-grow:1;">
+              <div class="author">${this.author?.displayName}</div>
+              <span class="followed" title="Following" style="color:slateblue;">
+                <i class="ms-Icon ms-Icon--UserFollowed"></i>
+              </span>
+            </div>
             <span @click=${this.shareHandler} class="share control badge badge-pill badge-light showOnHover" title="Share">
               <i class="ms-Icon ms-Icon--Share" aria-hidden="true"></i>
             </span>

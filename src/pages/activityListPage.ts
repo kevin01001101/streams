@@ -34,6 +34,25 @@ export class ActivityListPage {
       activity-list.loading .loadingMsg {
         display:block;
       }
+      activity-list.loading activity-item {
+        display:none;
+      }
+
+      .userInfo {
+        height: 20%;
+        background-color:cornflowerblue;
+      }
+      .leftNav {
+        font-size:150%;
+      }
+      .leftNav ul {
+        list-style-type: none;
+        padding-left:1rem;
+      }
+      .leftNav i.ms-Icon {
+        vertical-align:bottom;
+        margin-right:1rem;
+      }
 
     </style>
 
@@ -42,15 +61,17 @@ export class ActivityListPage {
             <heading>
                 <h1>STREAMS</h1>
             </heading>
-            <div>
-                <a href="/somewhere">About</a>
-                <h3>@ - Connect</h3>
-                <h3># - Discover</h3>
-                <h3>P - Me</h3>
-                <h3>S - Search</h3>
-                <h3>L - Lists</h3>
-                <h3>G - Settings</h3>
+            <div class="userInfo">
+              About Me
             </div>
+            <ul>
+                <li><i class="ms-Icon ms-Icon--Home" title="Home" aria-hidden="true"></i><a href="/index.html">Home</a></li>
+                <li><span data-link="/mentions">@ - Connect</span></li>
+                <li><span data-link="/tags"># - Discover</span></li>
+                <li><i class="ms-Icon ms-Icon--AccountManagement"></i><a href="/profile">My Profile</a></li>
+                <li><i class="ms-Icon ms-Icon--FolderList"></i><a href="/lists">My Lists</a></li>
+                <li><i class="ms-Icon ms-Icon--Settings"></i><a href="/settings">Settings</a></li>
+            </ul>
         </div>
 
         <div class="main" @publishActivity=${this.publishActivity}>
