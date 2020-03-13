@@ -111,6 +111,11 @@ export class StreamsApiClient implements ApiClient {
       filterParts.push("mentions/any(m:m/Email eq '" + filterOptions.mentions[0] + "')")
     }
 
+    // by alias of person...
+    if (filterOptions.author) {
+      filterParts.push("author/alias eq '" + filterOptions.author[0] + "'")
+    }
+
     return filterParts.join(' and ');
   }
 

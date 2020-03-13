@@ -200,10 +200,18 @@ export class ActivityListPage {
     switch (target.tagName) {
       case "A":
         routePath = (target as HTMLAnchorElement).href;
+        console.log(routePath);
+
         evt.preventDefault();
         break;
       case "ACTIVITY-ITEM":
         const originalTarget = evt.originalTarget as HTMLElement;
+        if (originalTarget.tagName == 'A' && originalTarget.classList.contains('author')) {
+          evt.preventDefault();
+          routePath = (originalTarget as HTMLAnchorElement).pathname;
+          break;
+        }
+
         if (originalTarget.tagName != 'SPAN') { return; }
         if (originalTarget.classList.contains('prosemirror-mention-node')) {
           routePath = '/e/' + originalTarget.getAttribute('data-mention-email');

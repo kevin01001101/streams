@@ -16,10 +16,10 @@ export class Entity {
         ({
             id: entity.id,
             displayName: entity.displayName,
-            email: entity.email,
-            alias: entity.alias
+            email: entity.email
         } = entityData);
-        Object.assign(entity, entityData);
+        entity.alias = (entityData.alias ? entityData.alias : entityData.email.substring(0,entityData.email.indexOf('@')));
+        //Object.assign(entity, entityData);
 
         return entity;
     }

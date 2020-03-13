@@ -8,7 +8,7 @@ import { ActivityList } from './components/activityList.js';
 import { ActivityListPage } from './pages/activityListPage.js';
 
 
-let streamsClient = new StreamsApiClient("https://localhost:44387");
+let streamsClient = new StreamsApiClient("https://fossa.zoo.test/streams");
 let streamsData = new StreamsDataStore(streamsClient);
 
 let currentPage;
@@ -81,12 +81,22 @@ Replies($count=true),
 ReplyTo($expand=Author),
 RestreamOf($expand=Author)&$orderby=Created desc
 */
+    } else if (route.indexOf('/a/') == 0) {
 
-    } else if (route.match(/@(\\w)+/)) {
-        let authorName = route.match(/([@\w]+)/)[0];
-        console.log(authorName);
-
-
+        let entityAlias = route.substring(route.lastIndexOf('/')+1)
+        console.log("Entity feed for: ", entityAlias);
+        currentPage = ActivityListPage.initialize(document.body, streamsData, {
+            showing: "From " + entityAlias,
+            dataQuery: {
+                expand: "Reactions($select=Type),Author,Replies($count=true),ReplyTo($expand=Author),RestreamOf($expand=Author)",
+                orderby: "Created desc",
+                filter: {
+                    author: [entityAlias]
+                }
+            }
+        }, (activities) => {
+            return activities
+        });
     } else if (route.indexOf('/e/') == 0) {
         let entityName = route.substring(route.lastIndexOf('/')+1)
         console.log("Entity feed for " + entityName);

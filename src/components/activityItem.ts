@@ -140,9 +140,14 @@ export class ActivityItem extends HTMLElement {
           width:40px;
         }
 
+        .card-header p {
+          margin:0;
+        }
         .author {
           flex-grow:1;
         }
+
+
         .card-body {
           padding: 0.5rem 0.75rem;
         }
@@ -243,7 +248,7 @@ export class ActivityItem extends HTMLElement {
           <div class="card-header">
             <div class="avatar"><img src="images/genericuser.png" class="img-thumbnail rounded" /></div>
             <div class="ml-2" style="flex-grow:1;">
-              <div class="author">${this.author?.displayName}</div>
+              <p><a class="author" href="/a/${this.author?.alias}">${this.author?.displayName}</a></p>
               <span class="followed" title="Following" style="color:slateblue;">
                 <i class="ms-Icon ms-Icon--UserFollowed"></i>
               </span>
